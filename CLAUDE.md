@@ -241,16 +241,25 @@ The server runs via stdio, configured in Claude Code's MCP settings:
 
 ## Development
 
+**This project uses Poetry for dependency management.**
+
 ```bash
-# Install with OSC client dependency
-pip install -e ".[dev]"
-pip install -e ../ableton-music-development
+# Install dependencies
+poetry install
+
+# Install OSC client dependency (local development)
+poetry add --editable ../ableton-music-development
 
 # Run server directly for testing
-python -m ableton_mcp
+poetry run python -m ableton_mcp
 
 # Run tests
-pytest
+poetry run pytest
+
+# Check Python syntax
+poetry run python -m py_compile src/ableton_mcp/tools/track.py
+
+# General rule: prefix all Python commands with `poetry run`
 ```
 
 ## Troubleshooting

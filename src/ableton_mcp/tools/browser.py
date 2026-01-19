@@ -161,6 +161,101 @@ def register_browser_tools(mcp):
         else:
             return f"No item found matching '{query}'"
 
+    @mcp.tool()
+    def browser_search_by_type(
+        query: Annotated[str, Field(description="Search string (case-insensitive partial match)")],
+        device_type: Annotated[str, Field(description="Category to search: 'instrument', 'audio_effect', 'midi_effect', or 'drums'")]
+    ) -> List[str]:
+        """Search for devices within a specific category only.
+
+        This is faster than browser_search because it only searches
+        one category. Useful when you know what type of device you want.
+
+        Args:
+            query: Search string (case-insensitive partial match)
+            device_type: Category to search:
+                         'instrument', 'audio_effect', 'midi_effect', 'drums'
+
+        Returns:
+            List of matching device names
+        """
+        browser = Browser(get_client())
+
+        valid_types = ['instrument', 'audio_effect', 'midi_effect', 'drums']
+        if device_type not in valid_types:
+            return [f"Invalid device_type: '{device_type}'. Must be one of: {valid_types}"]
+
+        # Get items from the specified category
+        if device_type == 'instrument':
+            items = browser.list_instruments()
+        elif device_type == 'audio_effect':
+            items = browser.list_audio_effects()
+        elif device_type == 'midi_effect':
+            items = browser.list_midi_effects()
+        elif device_type == 'drums':
+            items = browser.list_drums()
+
+        # Find fuzzy matches (case-insensitive)
+        query_lower = query.lower()
+        matches = [item for item in items if query_lower in item.lower()]
+
+        return matches
+
+    @mcp.tool()
+    def browser_search_in_packs(
+        query: Annotated[str, Field(description="Search string (case-insensitive partial match)")],
+        pack_names: Annotated[List[str], Field(description="List of pack names to search (fuzzy match)")] = None
+    ) -> List[dict]:
+        """Search for devices within specific packs (filesystem scan).
+
+        Scans the filesystem at ~/Music/Ableton/Factory Packs/
+        for .adg files matching the query. This is useful for finding
+        presets in specific packs.
+
+        Args:
+            query: Search string (case-insensitive partial match)
+            pack_names: List of pack names to search. If None, searches all packs.
+
+        Returns:
+            List of dicts with device_name, pack_name, and relative_path
+        """
+        pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
+        if not os.path.isdir(pack_root):
+            return [{"error": f"Pack directory not found: {pack_root}"}]
+
+        results = []
+        query_lower = query.lower()
+
+        # Get list of packs to search
+        all_packs = [p for p in os.listdir(pack_root)
+                     if os.path.isdir(os.path.join(pack_root, p))]
+
+        if pack_names:
+            # Filter to specified packs (fuzzy match)
+            packs_to_search = []
+            for target_pack in pack_names:
+                target_lower = target_pack.lower()
+                for pack in all_packs:
+                    if target_lower in pack.lower() and pack not in packs_to_search:
+                        packs_to_search.append(pack)
+        else:
+            packs_to_search = all_packs
+
+        # Search each pack
+        for pack_name in packs_to_search:
+            pack_path = os.path.join(pack_root, pack_name)
+            for root, dirs, files in os.walk(pack_path):
+                for f in files:
+                    if f.endswith('.adg') and query_lower in f.lower():
+                        rel_path = os.path.relpath(os.path.join(root, f), pack_path)
+                        results.append({
+                            "device_name": f,
+                            "pack_name": pack_name,
+                            "relative_path": rel_path
+                        })
+
+        return results
+
     # =============================================================================
     # Loading Items
     # =============================================================================

@@ -3,13 +3,14 @@
 Covers track-level operations like volume, pan, mute, solo, devices, and routing.
 """
 
+import os
 import time
 from typing import Annotated
 
 from pydantic import Field
 
 from ableton_mcp.connection import get_client
-from abletonosc_client import Track, View
+from abletonosc_client import Track, View, Browser
 
 
 def register_track_tools(mcp):
@@ -380,7 +381,8 @@ def register_track_tools(mcp):
     def track_insert_device(
         track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
         device_name: Annotated[str, Field(description="Name of the device to load (e.g., 'Drum Rack', 'Wavetable', 'Reverb')")],
-        device_index: Annotated[int, Field(description="Position to insert device (-1 = end of chain)")] = -1
+        device_index: Annotated[int, Field(description="Position to insert device (-1 = end of chain)")] = -1,
+        device_type: Annotated[str, Field(description="Optional: filter to specific category - 'instrument', 'audio_effect', 'midi_effect', or 'drums'")] = None
     ) -> str:
         """Insert a device onto a track by name.
 
@@ -390,21 +392,62 @@ def register_track_tools(mcp):
         IMPORTANT: You must select the track first with view_set_selected_track
         before calling this, as devices load to the currently selected track.
 
+        Use device_type to constrain the search to a specific category.
+        This prevents issues like searching for "Pad" and getting a drum kit
+        instead of a synth pad.
+
         Args:
             track_index: Track index (0-based)
             device_name: Name of the device to load (e.g., "Drum Rack", "Wavetable", "Reverb")
             device_index: Position to insert device (-1 = end of chain)
+            device_type: Optional filter - only search this category:
+                         'instrument', 'audio_effect', 'midi_effect', 'drums'
 
         Returns:
             Confirmation message with device index, or error if not found
         """
         view = View(get_client())
         track = Track(get_client())
+        browser = Browser(get_client())
 
         # Critical: select track first (see TROUBLESHOOTING.md)
         view.set_selected_track(track_index)
         time.sleep(0.1)
 
+        # If device_type specified, search only that category
+        if device_type:
+            valid_types = ['instrument', 'audio_effect', 'midi_effect', 'drums']
+            if device_type not in valid_types:
+                return f"Invalid device_type: '{device_type}'. Must be one of: {valid_types}"
+
+            # Get items from the specified category
+            if device_type == 'instrument':
+                items = browser.list_instruments()
+            elif device_type == 'audio_effect':
+                items = browser.list_audio_effects()
+            elif device_type == 'midi_effect':
+                items = browser.list_midi_effects()
+            elif device_type == 'drums':
+                items = browser.list_drums()
+
+            # Find fuzzy match (case-insensitive)
+            query_lower = device_name.lower()
+            matches = [item for item in items if query_lower in item.lower()]
+
+            if not matches:
+                return f"No {device_type} found matching '{device_name}'. Available: {items[:10]}..."
+
+            # Load the first match
+            best_match = matches[0]
+            success = browser.load_item(best_match)
+            time.sleep(0.3)
+
+            if success:
+                return f"Loaded {device_type} '{best_match}' on track {track_index}"
+            else:
+                return f"Found '{best_match}' but failed to load it"
+
+        # Default behavior: search all categories (existing behavior)
         result = track.insert_device(track_index, device_name, device_index)
         time.sleep(0.3)
 
@@ -1018,3 +1061,103 @@ def register_track_tools(mcp):
         """
         track = Track(get_client())
         return list(track.get_clips_colors(track_index))
+
+    # =============================================================================
+    # Pack-Filtered Device Loading
+    # =============================================================================
+
+    @mcp.tool()
+    def track_insert_device_from_pack(
+        track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+        device_name: Annotated[str, Field(description="Name to search for (fuzzy match)")],
+        pack_name: Annotated[str, Field(description="Pack to search in (fuzzy match on pack name)")],
+        device_index: Annotated[int, Field(description="Position in device chain (-1 = end)")] = -1
+    ) -> str:
+        """Load a device from a specific pack only.
+
+        Uses filesystem scan to find .adg files in the pack,
+        then loads the matching device. This is useful for loading
+        presets from specific packs like "Electric Keyboards" or
+        "Golden Era Hip-Hop Drums".
+
+        Args:
+            track_index: Track index (0-based)
+            device_name: Name to search for (fuzzy match, case-insensitive)
+            pack_name: Pack to search in (fuzzy match on pack name)
+            device_index: Position in device chain (-1 = end)
+
+        Returns:
+            Confirmation message with loaded device, or error if not found
+        """
+        view = View(get_client())
+        browser = Browser(get_client())
+
+        # Critical: select track first (see TROUBLESHOOTING.md)
+        view.set_selected_track(track_index)
+        time.sleep(0.1)
+
+        # Scan packs from disk
+        pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
+        if not os.path.isdir(pack_root):
+            return f"Pack directory not found: {pack_root}"
+
+        # Find matching pack
+        matching_pack = None
+        pack_name_lower = pack_name.lower()
+        for pack in os.listdir(pack_root):
+            pack_path = os.path.join(pack_root, pack)
+            if os.path.isdir(pack_path) and pack_name_lower in pack.lower():
+                matching_pack = pack
+                break
+
+        if not matching_pack:
+            available_packs = [p for p in os.listdir(pack_root)
+                              if os.path.isdir(os.path.join(pack_root, p))]
+            return f"Pack not found: '{pack_name}'. Available packs: {available_packs}"
+
+        # Find .adg files in pack
+        pack_path = os.path.join(pack_root, matching_pack)
+        device_name_lower = device_name.lower()
+        matches = []
+
+        for root, dirs, files in os.walk(pack_path):
+            for f in files:
+                if f.endswith('.adg') and device_name_lower in f.lower():
+                    rel_path = os.path.relpath(os.path.join(root, f), pack_path)
+                    matches.append((f, rel_path))
+
+        if not matches:
+            # List available .adg files to help user
+            all_adg = []
+            for root, dirs, files in os.walk(pack_path):
+                for f in files:
+                    if f.endswith('.adg'):
+                        all_adg.append(f)
+            return (f"No device matching '{device_name}' in pack '{matching_pack}'. "
+                    f"Available devices: {all_adg[:15]}...")
+
+        # Load the first match
+        best_match_name, best_match_path = matches[0]
+        full_path = f"{matching_pack}/{best_match_path}"
+
+        # Try to load via browser
+        success = browser.load_item(best_match_name[:-4])  # Try without .adg extension
+        if not success:
+            success = browser.load_item(best_match_name)  # Try with extension
+        if not success:
+            success = browser.load_item(full_path)  # Try full path
+
+        time.sleep(0.3)
+
+        if success:
+            return f"Loaded '{best_match_name}' from pack '{matching_pack}' on track {track_index}"
+        else:
+            # Even if browser.load_item reports failure, the device might have loaded
+            # Check if there are any devices on the track now
+            track_obj = Track(get_client())
+            device_names = list(track_obj.get_device_names(track_index))
+            if device_names:
+                return (f"Attempted to load '{best_match_name}' from '{matching_pack}'. "
+                        f"Track {track_index} now has devices: {device_names}")
+            return (f"Found '{best_match_name}' in '{matching_pack}' but failed to load. "
+                    f"Try using track_insert_device with the exact name.")
