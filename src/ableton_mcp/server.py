@@ -9,7 +9,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from ableton_mcp.connection import get_client
-from abletonosc_client import Song, Track, Clip, ClipSlot, Scene, View
+from abletonosc_client import Song, Track, Clip, ClipSlot, Scene, View, Device
 from abletonosc_client.clip import Note
 
 # Create FastMCP server
@@ -569,6 +569,191 @@ def view_set_selected_scene(
     view = View(get_client())
     view.set_selected_scene(scene_index)
     return f"Scene {scene_index} selected"
+
+
+# =============================================================================
+# Device Tools
+# =============================================================================
+
+
+@mcp.tool()
+def track_insert_device(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+    device_name: Annotated[str, Field(description="Name of the device to load (e.g., 'Drum Rack', 'Wavetable', 'Reverb')")],
+    device_index: Annotated[int, Field(description="Position to insert device (-1 = end of chain)")] = -1
+) -> str:
+    """Insert a device onto a track by name.
+
+    Searches instruments, audio effects, midi effects, drums, and sounds
+    for a matching device name and loads it onto the track.
+
+    IMPORTANT: You must select the track first with view_set_selected_track
+    before calling this, as devices load to the currently selected track.
+
+    Args:
+        track_index: Track index (0-based)
+        device_name: Name of the device to load (e.g., "Drum Rack", "Wavetable", "Reverb")
+        device_index: Position to insert device (-1 = end of chain)
+
+    Returns:
+        Confirmation message with device index, or error if not found
+    """
+    import time
+    view = View(get_client())
+    track = Track(get_client())
+
+    # Critical: select track first (see TROUBLESHOOTING.md)
+    view.set_selected_track(track_index)
+    time.sleep(0.1)
+
+    result = track.insert_device(track_index, device_name, device_index)
+    time.sleep(0.3)
+
+    if result == -1:
+        return f"Device '{device_name}' not found"
+    return f"Device '{device_name}' inserted at index {result} on track {track_index}"
+
+
+@mcp.tool()
+def track_get_device_names(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)]
+) -> list[str]:
+    """Get names of all devices on a track.
+
+    Args:
+        track_index: Track index (0-based)
+
+    Returns:
+        List of device names
+    """
+    track = Track(get_client())
+    return list(track.get_device_names(track_index))
+
+
+@mcp.tool()
+def track_get_num_devices(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)]
+) -> int:
+    """Get the number of devices on a track.
+
+    Args:
+        track_index: Track index (0-based)
+
+    Returns:
+        Number of devices
+    """
+    track = Track(get_client())
+    return track.get_num_devices(track_index)
+
+
+@mcp.tool()
+def track_delete_device(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+    device_index: Annotated[int, Field(description="Device index to delete (0-based)", ge=0)]
+) -> str:
+    """Delete a device from a track.
+
+    Args:
+        track_index: Track index (0-based)
+        device_index: Device index to delete (0-based)
+
+    Returns:
+        Confirmation message
+    """
+    track = Track(get_client())
+    track.delete_device(track_index, device_index)
+    return f"Device {device_index} deleted from track {track_index}"
+
+
+@mcp.tool()
+def device_get_name(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+    device_index: Annotated[int, Field(description="Device index (0-based)", ge=0)]
+) -> str:
+    """Get the name of a device.
+
+    Args:
+        track_index: Track index (0-based)
+        device_index: Device index on track (0-based)
+
+    Returns:
+        Device name
+    """
+    device = Device(get_client())
+    return device.get_name(track_index, device_index)
+
+
+@mcp.tool()
+def device_get_parameters(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+    device_index: Annotated[int, Field(description="Device index (0-based)", ge=0)]
+) -> list[dict]:
+    """Get all parameters for a device.
+
+    Args:
+        track_index: Track index (0-based)
+        device_index: Device index on track (0-based)
+
+    Returns:
+        List of parameters, each with index, name, value, min, max
+    """
+    device = Device(get_client())
+    params = device.get_parameters(track_index, device_index)
+    return [
+        {
+            "index": p.index,
+            "name": p.name,
+            "value": p.value,
+            "min": p.min,
+            "max": p.max
+        }
+        for p in params
+    ]
+
+
+@mcp.tool()
+def device_set_parameter(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+    device_index: Annotated[int, Field(description="Device index (0-based)", ge=0)],
+    parameter_index: Annotated[int, Field(description="Parameter index (0-based)", ge=0)],
+    value: Annotated[float, Field(description="New parameter value")]
+) -> str:
+    """Set a device parameter value.
+
+    Args:
+        track_index: Track index (0-based)
+        device_index: Device index on track (0-based)
+        parameter_index: Parameter index (0-based)
+        value: New parameter value
+
+    Returns:
+        Confirmation message
+    """
+    device = Device(get_client())
+    device.set_parameter_value(track_index, device_index, parameter_index, value)
+    return f"Parameter {parameter_index} on device {device_index} (track {track_index}) set to {value}"
+
+
+@mcp.tool()
+def device_set_enabled(
+    track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
+    device_index: Annotated[int, Field(description="Device index (0-based)", ge=0)],
+    enabled: Annotated[bool, Field(description="True to enable, False to bypass")]
+) -> str:
+    """Enable or disable (bypass) a device.
+
+    Args:
+        track_index: Track index (0-based)
+        device_index: Device index on track (0-based)
+        enabled: True to enable, False to bypass
+
+    Returns:
+        Confirmation message
+    """
+    device = Device(get_client())
+    device.set_is_active(track_index, device_index, enabled)
+    state = "enabled" if enabled else "bypassed"
+    return f"Device {device_index} on track {track_index} {state}"
 
 
 def main():
