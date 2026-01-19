@@ -30,6 +30,7 @@ Tools are organized by domain, matching the OSC client structure:
 - `song_play` / `song_stop` - Transport
 - `song_get_time_signature` / `song_set_time_signature`
 - `song_get_num_tracks` / `song_get_num_scenes`
+- `song_clear_all_tracks` - Delete all tracks (backwards, with delays)
 
 ### Track Tools
 - `track_get_volume` / `track_set_volume`

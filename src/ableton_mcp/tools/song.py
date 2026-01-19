@@ -3,6 +3,7 @@
 Covers song-level operations like tempo, transport, scenes, and global settings.
 """
 
+import time
 from typing import Annotated
 
 from pydantic import Field
@@ -411,6 +412,27 @@ def register_song_tools(mcp):
     # =============================================================================
     # Track Management
     # =============================================================================
+
+    @mcp.tool()
+    def song_clear_all_tracks() -> str:
+        """Delete all tracks from the song.
+
+        Deletes tracks from highest index to lowest to avoid index shifting issues.
+        Includes a small delay between deletions for Ableton to process.
+
+        Returns:
+            Confirmation message with number of tracks deleted
+        """
+        song = Song(get_client())
+        num_tracks = song.get_num_tracks()
+        if num_tracks == 0:
+            return "No tracks to delete"
+
+        for i in range(num_tracks - 1, -1, -1):
+            song.delete_track(i)
+            time.sleep(0.1)
+
+        return f"Deleted {num_tracks} tracks"
 
     @mcp.tool()
     def song_create_midi_track(
