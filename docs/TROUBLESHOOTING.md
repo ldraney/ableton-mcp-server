@@ -145,6 +145,26 @@ clip.add_notes(track_idx, scene_idx, notes)
 clip_slot.fire(track_idx, scene_idx)  # NOW it plays
 ```
 
+### 5. Select Track BEFORE insert_device
+
+**Critical:** `browser.load_item()` in AbletonOSC loads devices to the *currently selected* track in Ableton's UI, ignoring the track index parameter.
+
+```python
+# WRONG - device loads to whatever track is selected in Ableton
+track.insert_device(my_track_idx, "Wavetable")  # May go to wrong track!
+
+# RIGHT - select first, then insert
+view.set_selected_track(my_track_idx)
+time.sleep(0.1)
+track.insert_device(my_track_idx, "Wavetable")  # Now loads correctly
+time.sleep(0.3)
+```
+
+**Symptoms of this bug:**
+- Device returns index 0 but track has 0 devices
+- Track output shows "No Output" (MIDI-only, no instrument)
+- insert_device logs show "Inserting device" but no "Device not found"
+
 ---
 
 ## Working Song Template
@@ -160,6 +180,7 @@ from osc_client.song import Song
 from osc_client.track import Track
 from osc_client.clip_slot import ClipSlot
 from osc_client.clip import Clip, Note
+from osc_client.view import View
 
 
 def create_song():
@@ -168,6 +189,7 @@ def create_song():
     track = Track(client)
     clip_slot = ClipSlot(client)
     clip = Clip(client)
+    view = View(client)
 
     # Stop anything playing
     song.stop_playing()
@@ -182,7 +204,9 @@ def create_song():
     song.create_midi_track(-1)
     time.sleep(0.3)
 
-    # Add instrument
+    # Add instrument - MUST select track first!
+    view.set_selected_track(start_idx)
+    time.sleep(0.1)
     track.insert_device(start_idx, "Wavetable")
     time.sleep(0.3)
 
