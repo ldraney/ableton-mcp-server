@@ -52,12 +52,134 @@ Tools are organized by domain, matching the OSC client structure:
 - `scene_get_name` / `scene_set_name`
 
 ### Device Tools
+- `track_insert_device` - Load device by name (enhanced with recursive pack search)
 - `device_get_parameters`
 - `device_set_parameter`
 - `device_enable` / `device_disable`
 
+### Browser Tools
+**Working:**
+- `browser_list_instruments` - List top-level instruments (Analog, Wavetable, etc.)
+- `browser_list_audio_effects` - List top-level audio effects (Reverb, Compressor, etc.)
+- `browser_list_midi_effects` - List top-level MIDI effects (Arpeggiator, Scale, etc.)
+- `browser_list_drums` - List all drum kits (.adg files) - **346 kits!**
+- `browser_list_sounds` - List sound categories
+- `browser_scan_packs_from_disk` - Scan filesystem for installed packs and .adg files
+- `browser_generate_local_cache` - Generate JSON cache of all browser items + packs from disk
+
+**Limited/Not Working:**
+- `browser_list_packs` - Returns empty (browser.packs API issue)
+- `browser_search` - Times out (recursive search too slow)
+- `browser_search_and_load` - Times out
+- `browser_list_pack_contents` - Times out
+- `browser_load_item` - Use `track_insert_device` instead
+
 ### View Tools
 - `view_select_track` / `view_select_scene`
+
+## Device Discovery
+
+### Pack Locations on Disk
+
+Since `browser.packs` API doesn't work, packs are scanned from the filesystem:
+
+```
+~/Music/Ableton/Factory Packs/
+├── Chop and Swing/
+├── Convolution Reverb/
+├── Drum Essentials/
+├── Electric Keyboards/
+│   └── Sounds/
+│       ├── Suitcase Piano/
+│       │   ├── Basic Suitcase Amp.adg
+│       │   ├── Basic Suitcase DI.adg
+│       │   └── ...
+│       ├── Tonewheel Organ/
+│       └── Wurly Piano/
+├── Golden Era Hip-Hop Drums by Sound Oracle/
+│   └── Drums/
+│       ├── Golden Era Kit.adg
+│       ├── Black Squid Kit.adg
+│       └── ...
+├── Grand Piano/
+├── Retro Synths/
+└── ...
+```
+
+### Recommended Workflow
+
+1. **Generate local cache** (one-time):
+   ```
+   browser_generate_local_cache()
+   ```
+   Creates `local_browser_cache.json` with all 346+ drum kits, instruments, effects, AND all packs from disk.
+
+2. **Discover available devices**:
+   ```python
+   browser_list_drums()      # → ["808 Core Kit.adg", "Golden Era Kit.adg", ...]
+   browser_list_instruments() # → ["Analog", "Wavetable", "Operator", ...]
+   browser_list_audio_effects() # → ["Reverb", "Compressor", ...]
+   ```
+
+3. **Load devices** (fuzzy match):
+   ```python
+   track_insert_device(0, "Golden Era")  # Loads "Golden Era Kit"
+   track_insert_device(0, "808 Core")    # Loads "808 Core Kit"
+   track_insert_device(0, "Wavetable")   # Loads Wavetable synth
+   ```
+
+4. **Verify**:
+   ```python
+   track_get_device_names(0)  # Confirm device loaded
+   ```
+
+### How Device Search Works
+`track_insert_device` searches through standard browser locations:
+- `browser.instruments`, `browser.audio_effects`, `browser.midi_effects`, `browser.drums`, `browser.sounds`
+
+**Match logic** (fuzzy, case-insensitive): `query in item.name.lower()`
+
+### Verified Working Devices
+```
+Drum Kits (.adg files):
+- "Golden Era" → Golden Era Kit
+- "808 Core" → 808 Core Kit
+- "909 Core" → 909 Core Kit
+- "707 Core" → 707 Core Kit
+
+Pack Presets (.adg files):
+- "Suitcase" → Basic Suitcase Amp (Electric Keyboards pack)
+- "Wurly" → Wurly Piano presets
+- "Tonewheel" → Tonewheel Organ presets
+
+Stock Instruments:
+- "Wavetable", "Analog", "Operator", "Drift", "Meld"
+
+Stock Effects:
+- "Reverb", "Compressor", "EQ Eight", "Delay", "Echo"
+```
+
+### Local Browser Cache
+The `browser_generate_local_cache()` tool creates a JSON file with:
+- All 346 drum kits (.adg files)
+- 23 instruments
+- 66 audio effects
+- 16 MIDI effects
+- 20 sound categories
+- All packs from disk with their .adg presets (from `~/Music/Ableton/Factory Packs/`)
+
+This file is auto-generated and added to `.gitignore` (local configuration).
+
+### Discovering Pack Contents
+Use `browser_scan_packs_from_disk()` to enumerate all installed packs:
+```python
+browser_scan_packs_from_disk()
+# Returns: {
+#   "Electric Keyboards": ["Sounds/Suitcase Piano/Basic Suitcase Amp.adg", ...],
+#   "Golden Era Hip-Hop Drums": ["Drums/Golden Era Kit.adg", ...],
+#   ...
+# }
+```
 
 ## Project Structure
 
@@ -73,9 +195,13 @@ ableton-mcp-server/
 │       │   ├── song.py
 │       │   ├── track.py
 │       │   ├── clip.py
+│       │   ├── clip_slot.py
 │       │   ├── scene.py
 │       │   ├── device.py
-│       │   └── view.py
+│       │   ├── view.py
+│       │   ├── application.py
+│       │   ├── midimap.py
+│       │   └── browser.py     # NEW: Pack exploration and device discovery
 │       └── connection.py      # OSC client singleton
 └── tests/
     └── ...
