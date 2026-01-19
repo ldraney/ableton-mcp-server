@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "ableton-mcp-server"
+version = "0.1.0"
+description = "MCP server for controlling Ableton Live via Claude Code"
+authors = ["ldraney"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "ableton_mcp", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+fastmcp = ">=2.3.4"
+abletonosc-client = {path = "../ableton-music-development", develop = true}
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0"
+
+[tool.poetry.scripts]
+ableton-mcp = "ableton_mcp.server:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
