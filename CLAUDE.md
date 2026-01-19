@@ -126,7 +126,16 @@ python -m ableton_mcp
 pytest
 ```
 
+## Troubleshooting
+
+See `docs/TROUBLESHOOTING.md` for:
+- Common errors and fixes
+- Critical patterns (delete backwards, sleep between ops)
+- Working song template
+- QA checklist
+
 ## Related Projects
 - `ldraney/ableton-music-development` - OSC client wrapper (Phase 1)
-- `ideoforms/AbletonOSC` - Ableton MIDI Remote Script
+- `ldraney/AbletonOSC` - Fork with device insertion (PR #173 to upstream)
+- `ideoforms/AbletonOSC` - Upstream Ableton MIDI Remote Script
 - `ldraney/ableton-manual` - RAG for Ableton documentation
