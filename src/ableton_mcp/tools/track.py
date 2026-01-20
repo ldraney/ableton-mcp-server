@@ -3,8 +3,6 @@
 Covers track-level operations like volume, pan, mute, solo, devices, and routing.
 """
 
-import os
-import time
 from typing import Annotated
 
 from pydantic import Field
@@ -412,7 +410,6 @@ def register_track_tools(mcp):
 
         # Critical: select track first (see TROUBLESHOOTING.md)
         view.set_selected_track(track_index)
-        time.sleep(0.1)
 
         # If device_type specified, search only that category
         if device_type:
@@ -440,7 +437,6 @@ def register_track_tools(mcp):
             # Load the first match
             best_match = matches[0]
             success = browser.load_item(best_match)
-            time.sleep(0.3)
 
             if success:
                 return f"Loaded {device_type} '{best_match}' on track {track_index}"
@@ -449,7 +445,6 @@ def register_track_tools(mcp):
 
         # Default behavior: search all categories (existing behavior)
         result = track.insert_device(track_index, device_name, device_index)
-        time.sleep(0.3)
 
         if result == -1:
             return f"Device '{device_name}' not found"
@@ -1061,103 +1056,3 @@ def register_track_tools(mcp):
         """
         track = Track(get_client())
         return list(track.get_clips_colors(track_index))
-
-    # =============================================================================
-    # Pack-Filtered Device Loading
-    # =============================================================================
-
-    @mcp.tool()
-    def track_insert_device_from_pack(
-        track_index: Annotated[int, Field(description="Track index (0-based)", ge=0)],
-        device_name: Annotated[str, Field(description="Name to search for (fuzzy match)")],
-        pack_name: Annotated[str, Field(description="Pack to search in (fuzzy match on pack name)")],
-        device_index: Annotated[int, Field(description="Position in device chain (-1 = end)")] = -1
-    ) -> str:
-        """Load a device from a specific pack only.
-
-        Uses filesystem scan to find .adg files in the pack,
-        then loads the matching device. This is useful for loading
-        presets from specific packs like "Electric Keyboards" or
-        "Golden Era Hip-Hop Drums".
-
-        Args:
-            track_index: Track index (0-based)
-            device_name: Name to search for (fuzzy match, case-insensitive)
-            pack_name: Pack to search in (fuzzy match on pack name)
-            device_index: Position in device chain (-1 = end)
-
-        Returns:
-            Confirmation message with loaded device, or error if not found
-        """
-        view = View(get_client())
-        browser = Browser(get_client())
-
-        # Critical: select track first (see TROUBLESHOOTING.md)
-        view.set_selected_track(track_index)
-        time.sleep(0.1)
-
-        # Scan packs from disk
-        pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
-        if not os.path.isdir(pack_root):
-            return f"Pack directory not found: {pack_root}"
-
-        # Find matching pack
-        matching_pack = None
-        pack_name_lower = pack_name.lower()
-        for pack in os.listdir(pack_root):
-            pack_path = os.path.join(pack_root, pack)
-            if os.path.isdir(pack_path) and pack_name_lower in pack.lower():
-                matching_pack = pack
-                break
-
-        if not matching_pack:
-            available_packs = [p for p in os.listdir(pack_root)
-                              if os.path.isdir(os.path.join(pack_root, p))]
-            return f"Pack not found: '{pack_name}'. Available packs: {available_packs}"
-
-        # Find .adg files in pack
-        pack_path = os.path.join(pack_root, matching_pack)
-        device_name_lower = device_name.lower()
-        matches = []
-
-        for root, dirs, files in os.walk(pack_path):
-            for f in files:
-                if f.endswith('.adg') and device_name_lower in f.lower():
-                    rel_path = os.path.relpath(os.path.join(root, f), pack_path)
-                    matches.append((f, rel_path))
-
-        if not matches:
-            # List available .adg files to help user
-            all_adg = []
-            for root, dirs, files in os.walk(pack_path):
-                for f in files:
-                    if f.endswith('.adg'):
-                        all_adg.append(f)
-            return (f"No device matching '{device_name}' in pack '{matching_pack}'. "
-                    f"Available devices: {all_adg[:15]}...")
-
-        # Load the first match
-        best_match_name, best_match_path = matches[0]
-        full_path = f"{matching_pack}/{best_match_path}"
-
-        # Try to load via browser
-        success = browser.load_item(best_match_name[:-4])  # Try without .adg extension
-        if not success:
-            success = browser.load_item(best_match_name)  # Try with extension
-        if not success:
-            success = browser.load_item(full_path)  # Try full path
-
-        time.sleep(0.3)
-
-        if success:
-            return f"Loaded '{best_match_name}' from pack '{matching_pack}' on track {track_index}"
-        else:
-            # Even if browser.load_item reports failure, the device might have loaded
-            # Check if there are any devices on the track now
-            track_obj = Track(get_client())
-            device_names = list(track_obj.get_device_names(track_index))
-            if device_names:
-                return (f"Attempted to load '{best_match_name}' from '{matching_pack}'. "
-                        f"Track {track_index} now has devices: {device_names}")
-            return (f"Found '{best_match_name}' in '{matching_pack}' but failed to load. "
-                    f"Try using track_insert_device with the exact name.")

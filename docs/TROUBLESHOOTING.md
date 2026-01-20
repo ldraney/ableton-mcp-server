@@ -93,26 +93,30 @@ Then recreate your song fresh.
 
 ---
 
-## Critical Patterns
+## Agent Responsibilities
+
+These patterns are **NOT** built into the MCP server - agents must implement them.
+The MCP is a pure 1:1 wrapper over AbletonOSC with no timing or sequencing logic.
 
 ### 1. Always Sleep Between Operations
 
-Ableton needs processing time:
+Ableton needs processing time. Agents must add sleeps:
 ```python
 song.create_midi_track(-1)
-time.sleep(0.3)  # REQUIRED
+time.sleep(0.3)  # Agent must add this
 
 track.insert_device(idx, "Wavetable")
-time.sleep(0.3)  # REQUIRED
+time.sleep(0.3)  # Agent must add this
 
 clip_slot.create_clip(idx, 0, 16.0)
-time.sleep(0.2)  # REQUIRED
+time.sleep(0.2)  # Agent must add this
 ```
 
 Without sleeps → race conditions → missing devices/clips.
 
 ### 2. Delete Tracks Backwards
 
+Agents must handle index shifting:
 ```python
 # WRONG - indices shift as you delete
 for i in range(num_tracks):
@@ -121,6 +125,7 @@ for i in range(num_tracks):
 # RIGHT - delete from end
 for i in range(num_tracks - 1, -1, -1):
     song.delete_track(i)  # WORKS
+    time.sleep(0.1)       # Agent adds sleep between deletes
 ```
 
 ### 3. Get Track Index Before Creating
@@ -129,7 +134,7 @@ for i in range(num_tracks - 1, -1, -1):
 # Track will be created at current count
 start_tracks = song.get_num_tracks()
 song.create_midi_track(-1)
-time.sleep(0.3)
+time.sleep(0.3)  # Agent adds sleep
 # New track is now at index `start_tracks`
 my_track_idx = start_tracks
 ```
@@ -153,17 +158,29 @@ clip_slot.fire(track_idx, scene_idx)  # NOW it plays
 # WRONG - device loads to whatever track is selected in Ableton
 track.insert_device(my_track_idx, "Wavetable")  # May go to wrong track!
 
-# RIGHT - select first, then insert
+# RIGHT - select first, then insert (agent handles this)
 view.set_selected_track(my_track_idx)
-time.sleep(0.1)
-track.insert_device(my_track_idx, "Wavetable")  # Now loads correctly
-time.sleep(0.3)
+time.sleep(0.1)                                 # Agent adds sleep
+track.insert_device(my_track_idx, "Wavetable")
+time.sleep(0.3)                                 # Agent adds sleep
 ```
 
 **Symptoms of this bug:**
 - Device returns index 0 but track has 0 devices
 - Track output shows "No Output" (MIDI-only, no instrument)
 - insert_device logs show "Inserting device" but no "Device not found"
+
+### 6. Pack Discovery via Filesystem
+
+Since `browser.packs` API doesn't work via OSC, agents should scan the filesystem directly:
+```python
+pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
+for pack_name in os.listdir(pack_root):
+    pack_path = os.path.join(pack_root, pack_name)
+    # Walk pack_path to find .adg files
+```
+
+This is intentionally **not** in the MCP server - it's agent orchestration logic.
 
 ---
 

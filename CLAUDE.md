@@ -21,6 +21,21 @@ Ableton Live
 - Ableton Live 12 with AbletonOSC installed and enabled
 - The `ableton-osc-client` package from `ldraney/ableton-music-development`
 
+## Design Philosophy: Pure 1:1 Wrapper
+
+This MCP server is a **pure wrapper** over AbletonOSC. Each tool is a direct pass-through to an OSC endpoint with no additional logic.
+
+### What This Means for Agents
+
+1. **No Timing Logic**: Tools return immediately. Agents must:
+   - Add `time.sleep()` after operations that need settling time
+   - Delete tracks backwards to avoid index shifts
+   - Select track before loading devices
+
+2. **No Composite Operations**: Tools do one thing. Multi-step workflows should be implemented by agents.
+
+3. **No Filesystem Operations**: The MCP only communicates via OSC. Workarounds for broken APIs (like `browser.packs`) should be implemented by agents.
+
 ## Tool Organization
 
 Tools are organized by domain, matching the OSC client structure:
@@ -30,7 +45,7 @@ Tools are organized by domain, matching the OSC client structure:
 - `song_play` / `song_stop` - Transport
 - `song_get_time_signature` / `song_set_time_signature`
 - `song_get_num_tracks` / `song_get_num_scenes`
-- `song_clear_all_tracks` - Delete all tracks (backwards, with delays)
+- `song_delete_track` - Delete a single track (agents handle sequencing)
 
 ### Track Tools
 - `track_get_volume` / `track_set_volume`
@@ -52,92 +67,84 @@ Tools are organized by domain, matching the OSC client structure:
 - `scene_get_name` / `scene_set_name`
 
 ### Device Tools
-- `track_insert_device` - Load device by name (enhanced with recursive pack search)
+- `track_insert_device` - Load device by name (fuzzy search via OSC)
 - `device_get_parameters`
 - `device_set_parameter`
 - `device_enable` / `device_disable`
 
 ### Browser Tools
-**Working:**
+**Working (via OSC):**
 - `browser_list_instruments` - List top-level instruments (Analog, Wavetable, etc.)
 - `browser_list_audio_effects` - List top-level audio effects (Reverb, Compressor, etc.)
 - `browser_list_midi_effects` - List top-level MIDI effects (Arpeggiator, Scale, etc.)
-- `browser_list_drums` - List all drum kits (.adg files) - **346 kits!**
+- `browser_list_drums` - List all drum kits (.adg files)
 - `browser_list_sounds` - List sound categories
-- `browser_scan_packs_from_disk` - Scan filesystem for installed packs and .adg files
-- `browser_generate_local_cache` - Generate JSON cache of all browser items + packs from disk
+- `browser_search_by_type` - Search devices by category
+- `browser_load_item` - Load a browser item by path
 
-**Limited/Not Working:**
+**Limited/Not Working (OSC API issues):**
 - `browser_list_packs` - Returns empty (browser.packs API issue)
 - `browser_search` - Times out (recursive search too slow)
 - `browser_search_and_load` - Times out
 - `browser_list_pack_contents` - Times out
-- `browser_load_item` - Use `track_insert_device` instead
+
+**Removed (filesystem operations belong in agents):**
+- ~~`browser_scan_packs_from_disk`~~ - Agents should scan `~/Music/Ableton/Factory Packs/` directly
+- ~~`browser_search_in_packs`~~ - Agents should implement pack search
+- ~~`browser_generate_local_cache`~~ - Agents should generate their own caches
 
 ### View Tools
 - `view_select_track` / `view_select_scene`
 
 ## Device Discovery
 
-### Pack Locations on Disk
+### How Device Search Works
+`track_insert_device` searches through standard browser locations via OSC:
+- `browser.instruments`, `browser.audio_effects`, `browser.midi_effects`, `browser.drums`, `browser.sounds`
 
-Since `browser.packs` API doesn't work, packs are scanned from the filesystem:
-
-```
-~/Music/Ableton/Factory Packs/
-├── Chop and Swing/
-├── Convolution Reverb/
-├── Drum Essentials/
-├── Electric Keyboards/
-│   └── Sounds/
-│       ├── Suitcase Piano/
-│       │   ├── Basic Suitcase Amp.adg
-│       │   ├── Basic Suitcase DI.adg
-│       │   └── ...
-│       ├── Tonewheel Organ/
-│       └── Wurly Piano/
-├── Golden Era Hip-Hop Drums by Sound Oracle/
-│   └── Drums/
-│       ├── Golden Era Kit.adg
-│       ├── Black Squid Kit.adg
-│       └── ...
-├── Grand Piano/
-├── Retro Synths/
-└── ...
-```
+**Match logic** (fuzzy, case-insensitive): `query in item.name.lower()`
 
 ### Recommended Workflow
 
-1. **Generate local cache** (one-time):
-   ```
-   browser_generate_local_cache()
-   ```
-   Creates `local_browser_cache.json` with all 346+ drum kits, instruments, effects, AND all packs from disk.
-
-2. **Discover available devices**:
+1. **Discover available devices**:
    ```python
    browser_list_drums()      # → ["808 Core Kit.adg", "Golden Era Kit.adg", ...]
    browser_list_instruments() # → ["Analog", "Wavetable", "Operator", ...]
    browser_list_audio_effects() # → ["Reverb", "Compressor", ...]
    ```
 
-3. **Load devices** (fuzzy match):
+2. **Load devices** (fuzzy match):
    ```python
    track_insert_device(0, "Golden Era")  # Loads "Golden Era Kit"
    track_insert_device(0, "808 Core")    # Loads "808 Core Kit"
    track_insert_device(0, "Wavetable")   # Loads Wavetable synth
    ```
 
-4. **Verify**:
+3. **Verify**:
    ```python
    track_get_device_names(0)  # Confirm device loaded
    ```
 
-### How Device Search Works
-`track_insert_device` searches through standard browser locations:
-- `browser.instruments`, `browser.audio_effects`, `browser.midi_effects`, `browser.drums`, `browser.sounds`
+### Pack Discovery (Agent Responsibility)
 
-**Match logic** (fuzzy, case-insensitive): `query in item.name.lower()`
+Since `browser.packs` API doesn't work via OSC, agents that need pack discovery should scan the filesystem directly:
+
+```
+~/Music/Ableton/Factory Packs/
+├── Chop and Swing/
+├── Electric Keyboards/
+│   └── Sounds/
+│       ├── Suitcase Piano/
+│       │   ├── Basic Suitcase Amp.adg
+│       │   └── ...
+├── Golden Era Hip-Hop Drums by Sound Oracle/
+│   └── Drums/
+│       ├── Golden Era Kit.adg
+│       └── ...
+└── ...
+```
+
+This is intentionally **not** in the MCP server - it's agent orchestration logic.
 
 ### Verified Working Devices
 ```
@@ -147,38 +154,11 @@ Drum Kits (.adg files):
 - "909 Core" → 909 Core Kit
 - "707 Core" → 707 Core Kit
 
-Pack Presets (.adg files):
-- "Suitcase" → Basic Suitcase Amp (Electric Keyboards pack)
-- "Wurly" → Wurly Piano presets
-- "Tonewheel" → Tonewheel Organ presets
-
 Stock Instruments:
 - "Wavetable", "Analog", "Operator", "Drift", "Meld"
 
 Stock Effects:
 - "Reverb", "Compressor", "EQ Eight", "Delay", "Echo"
-```
-
-### Local Browser Cache
-The `browser_generate_local_cache()` tool creates a JSON file with:
-- All 346 drum kits (.adg files)
-- 23 instruments
-- 66 audio effects
-- 16 MIDI effects
-- 20 sound categories
-- All packs from disk with their .adg presets (from `~/Music/Ableton/Factory Packs/`)
-
-This file is auto-generated and added to `.gitignore` (local configuration).
-
-### Discovering Pack Contents
-Use `browser_scan_packs_from_disk()` to enumerate all installed packs:
-```python
-browser_scan_packs_from_disk()
-# Returns: {
-#   "Electric Keyboards": ["Sounds/Suitcase Piano/Basic Suitcase Amp.adg", ...],
-#   "Golden Era Hip-Hop Drums": ["Drums/Golden Era Kit.adg", ...],
-#   ...
-# }
 ```
 
 ## Project Structure
@@ -201,7 +181,7 @@ ableton-mcp-server/
 │       │   ├── view.py
 │       │   ├── application.py
 │       │   ├── midimap.py
-│       │   └── browser.py     # NEW: Pack exploration and device discovery
+│       │   └── browser.py     # Device browsing (OSC only)
 │       └── connection.py      # OSC client singleton
 └── tests/
     └── ...
@@ -266,7 +246,7 @@ poetry run python -m py_compile src/ableton_mcp/tools/track.py
 
 See `docs/TROUBLESHOOTING.md` for:
 - Common errors and fixes
-- Critical patterns (delete backwards, sleep between ops)
+- Agent responsibilities (timing, sequencing)
 - Working song template
 - QA checklist
 
