@@ -1089,19 +1089,3 @@ def register_song_tools(mcp):
         song = Song(get_client())
         return list(song.get_track_names(start, end))
 
-    # =============================================================================
-    # Save
-    # =============================================================================
-
-    @mcp.tool()
-    def song_save() -> str:
-        """Save the current Live set.
-
-        Note: Uses AppleScript to simulate Cmd+S (macOS only).
-
-        Returns:
-            Confirmation message
-        """
-        song = Song(get_client())
-        song.save()
-        return "Save triggered"
