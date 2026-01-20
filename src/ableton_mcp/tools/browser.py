@@ -4,6 +4,9 @@ Provides tools for exploring Ableton's browser, listing packs,
 and searching for devices/presets across all installed content.
 """
 
+import json
+import os
+from datetime import datetime
 from typing import Annotated, List
 
 from pydantic import Field
@@ -14,6 +17,52 @@ from abletonosc_client import Browser
 
 def register_browser_tools(mcp):
     """Register all browser tools with the MCP server."""
+
+    # =============================================================================
+    # Filesystem Pack Discovery (workaround for browser.packs API returning empty)
+    # =============================================================================
+
+    @mcp.tool()
+    def browser_scan_packs_from_disk(
+        pack_root: Annotated[str, Field(description="Root directory for packs (default: ~/Music/Ableton/Factory Packs)")] = ""
+    ) -> dict:
+        """Scan filesystem to enumerate installed packs and their .adg files.
+
+        Since browser.packs API returns empty, this tool scans the filesystem
+        at ~/Music/Ableton/Factory Packs/ to discover all installed packs
+        and their loadable .adg (Ableton Device Group) files.
+
+        This is the recommended way to discover what packs are installed
+        and what presets they contain.
+
+        Args:
+            pack_root: Root directory for packs (default: ~/Music/Ableton/Factory Packs)
+
+        Returns:
+            Dict mapping pack names to lists of .adg files found in each pack
+        """
+        if not pack_root:
+            pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
+
+        if not os.path.isdir(pack_root):
+            return {"error": f"Pack directory not found: {pack_root}"}
+
+        packs = {}
+        for pack_name in os.listdir(pack_root):
+            pack_path = os.path.join(pack_root, pack_name)
+            if os.path.isdir(pack_path):
+                # Find all .adg files recursively
+                adg_files = []
+                for root, dirs, files in os.walk(pack_path):
+                    for f in files:
+                        if f.endswith('.adg'):
+                            # Store relative path from pack root
+                            rel_path = os.path.relpath(os.path.join(root, f), pack_path)
+                            adg_files.append(rel_path)
+                if adg_files:  # Only include packs with .adg files
+                    packs[pack_name] = sorted(adg_files)
+
+        return packs
 
     # =============================================================================
     # Pack Exploration (via Ableton API - limited functionality)
@@ -152,6 +201,61 @@ def register_browser_tools(mcp):
 
         return matches
 
+    @mcp.tool()
+    def browser_search_in_packs(
+        query: Annotated[str, Field(description="Search string (case-insensitive partial match)")],
+        pack_names: Annotated[List[str], Field(description="List of pack names to search (fuzzy match)")] = None
+    ) -> List[dict]:
+        """Search for devices within specific packs (filesystem scan).
+
+        Scans the filesystem at ~/Music/Ableton/Factory Packs/
+        for .adg files matching the query. This is useful for finding
+        presets in specific packs.
+
+        Args:
+            query: Search string (case-insensitive partial match)
+            pack_names: List of pack names to search. If None, searches all packs.
+
+        Returns:
+            List of dicts with device_name, pack_name, and relative_path
+        """
+        pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
+        if not os.path.isdir(pack_root):
+            return [{"error": f"Pack directory not found: {pack_root}"}]
+
+        results = []
+        query_lower = query.lower()
+
+        # Get list of packs to search
+        all_packs = [p for p in os.listdir(pack_root)
+                     if os.path.isdir(os.path.join(pack_root, p))]
+
+        if pack_names:
+            # Filter to specified packs (fuzzy match)
+            packs_to_search = []
+            for target_pack in pack_names:
+                target_lower = target_pack.lower()
+                for pack in all_packs:
+                    if target_lower in pack.lower() and pack not in packs_to_search:
+                        packs_to_search.append(pack)
+        else:
+            packs_to_search = all_packs
+
+        # Search each pack
+        for pack_name in packs_to_search:
+            pack_path = os.path.join(pack_root, pack_name)
+            for root, dirs, files in os.walk(pack_path):
+                for f in files:
+                    if f.endswith('.adg') and query_lower in f.lower():
+                        rel_path = os.path.relpath(os.path.join(root, f), pack_path)
+                        results.append({
+                            "device_name": f,
+                            "pack_name": pack_name,
+                            "relative_path": rel_path
+                        })
+
+        return results
+
     # =============================================================================
     # Loading Items
     # =============================================================================
@@ -246,3 +350,148 @@ def register_browser_tools(mcp):
         """
         browser = Browser(get_client())
         return browser.list_sounds()
+
+    # =============================================================================
+    # Local Browser Cache Generation
+    # =============================================================================
+
+    @mcp.tool()
+    def browser_generate_local_cache(
+        output_path: Annotated[str, Field(description="Path to write the cache file (default: ./local_browser_cache.json)")] = ""
+    ) -> str:
+        """Generate a local cache of all browser content.
+
+        Enumerates all items from standard browser locations and saves
+        them to a JSON file. This creates a local registry of available
+        devices that can be used for quick lookups.
+
+        The generated file should be added to .gitignore as it represents
+        local Ableton configuration.
+
+        File extensions:
+        - .adg = Ableton Device Group (drum racks, instrument racks, presets)
+        - .adv = Ableton Device Preset
+        - .als = Ableton Live Set
+        - .alc = Ableton Live Clip
+
+        Args:
+            output_path: Where to save the cache (default: ./local_browser_cache.json)
+
+        Returns:
+            Confirmation message with stats
+        """
+        browser = Browser(get_client())
+
+        # Collect all browser content
+        cache = {
+            "generated_at": datetime.now().isoformat(),
+            "description": "Auto-generated browser cache. Add to .gitignore.",
+            "browser": {
+                "instruments": browser.list_instruments(),
+                "audio_effects": browser.list_audio_effects(),
+                "midi_effects": browser.list_midi_effects(),
+                "drums": browser.list_drums(),
+                "sounds": browser.list_sounds(),
+            },
+            "loadable_items": {},
+            "search_terms": {}
+        }
+
+        # Process drums - these are directly loadable .adg files
+        for item in cache["browser"]["drums"]:
+            if item.endswith(".adg"):
+                # Extract search term (name without extension)
+                name = item[:-4]  # Remove .adg
+                # Create variations for search
+                search_term = name.replace(" Kit", "").replace(".adg", "")
+                cache["loadable_items"][item] = {
+                    "category": "drums",
+                    "name": name,
+                    "search_terms": [name, search_term]
+                }
+                # Index by search terms
+                for term in [name.lower(), search_term.lower()]:
+                    if term not in cache["search_terms"]:
+                        cache["search_terms"][term] = []
+                    cache["search_terms"][term].append(item)
+
+        # Process instruments - these are folder names
+        for item in cache["browser"]["instruments"]:
+            cache["loadable_items"][item] = {
+                "category": "instruments",
+                "name": item,
+                "type": "folder" if not item.endswith((".adg", ".adv")) else "preset",
+                "search_terms": [item]
+            }
+
+        # Process audio effects
+        for item in cache["browser"]["audio_effects"]:
+            cache["loadable_items"][item] = {
+                "category": "audio_effects",
+                "name": item,
+                "type": "folder" if not item.endswith((".adg", ".adv")) else "preset",
+                "search_terms": [item]
+            }
+
+        # Process MIDI effects
+        for item in cache["browser"]["midi_effects"]:
+            cache["loadable_items"][item] = {
+                "category": "midi_effects",
+                "name": item,
+                "type": "folder" if not item.endswith((".adg", ".adv")) else "preset",
+                "search_terms": [item]
+            }
+
+        # Scan packs from disk (workaround for browser.packs API)
+        pack_root = os.path.expanduser("~/Music/Ableton/Factory Packs")
+        packs_from_disk = {}
+        total_pack_presets = 0
+        if os.path.isdir(pack_root):
+            for pack_name in os.listdir(pack_root):
+                pack_path = os.path.join(pack_root, pack_name)
+                if os.path.isdir(pack_path):
+                    adg_files = []
+                    for root, dirs, files in os.walk(pack_path):
+                        for f in files:
+                            if f.endswith('.adg'):
+                                rel_path = os.path.relpath(os.path.join(root, f), pack_path)
+                                adg_files.append(rel_path)
+                                # Add to search terms
+                                name_without_ext = f[:-4]  # Remove .adg
+                                search_key = name_without_ext.lower()
+                                if search_key not in cache["search_terms"]:
+                                    cache["search_terms"][search_key] = []
+                                cache["search_terms"][search_key].append(f"{pack_name}/{rel_path}")
+                    if adg_files:
+                        packs_from_disk[pack_name] = sorted(adg_files)
+                        total_pack_presets += len(adg_files)
+
+        cache["packs_from_disk"] = packs_from_disk
+
+        # Determine output path
+        if not output_path:
+            # Default to project root
+            output_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))),
+                "local_browser_cache.json"
+            )
+
+        # Write cache
+        with open(output_path, "w") as f:
+            json.dump(cache, f, indent=2)
+
+        # Stats
+        total_loadable = len([i for i in cache["browser"]["drums"] if i.endswith(".adg")])
+        total_instruments = len(cache["browser"]["instruments"])
+        total_effects = len(cache["browser"]["audio_effects"]) + len(cache["browser"]["midi_effects"])
+        num_packs = len(packs_from_disk)
+
+        return (
+            f"Generated browser cache at: {output_path}\n"
+            f"- Drum kits (.adg): {total_loadable}\n"
+            f"- Instruments: {total_instruments}\n"
+            f"- Effects: {total_effects}\n"
+            f"- Sound categories: {len(cache['browser']['sounds'])}\n"
+            f"- Packs from disk: {num_packs} packs, {total_pack_presets} presets (.adg)\n"
+            f"Remember to add 'local_browser_cache.json' to .gitignore"
+        )
