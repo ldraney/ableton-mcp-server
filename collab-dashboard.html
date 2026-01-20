@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ableton Collab Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        h1 { color: #ff6b35; margin-bottom: 10px; }
+        h2 { color: #4ecdc4; margin: 20px 0 10px; font-size: 1.1em; }
+        h3 { color: #ffe66d; margin: 15px 0 8px; font-size: 0.95em; }
+
+        .song-info {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 30px;
+        }
+        .song-info span { color: #888; }
+        .song-info strong { color: #4ecdc4; }
+
+        /* Scene Timeline */
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .scene {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            border: 2px solid #333;
+            transition: all 0.2s;
+        }
+        .scene.active { border-color: #ff6b35; background: #1f2b47; }
+        .scene.complete { border-color: #4ecdc4; }
+        .scene-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .scene-name { font-weight: bold; color: #ffe66d; }
+        .scene-status {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #333;
+        }
+        .scene-status.building { background: #ff6b35; color: #000; }
+        .scene-status.done { background: #4ecdc4; color: #000; }
+        .scene-desc { font-size: 0.85em; color: #888; margin-bottom: 10px; }
+        .scene-tracks { font-size: 0.8em; }
+        .track-item {
+            padding: 4px 8px;
+            background: #0f3460;
+            border-radius: 4px;
+            margin: 3px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .track-item .device { color: #4ecdc4; }
+
+        /* Sound Palette */
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .category {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .category-title {
+            color: #ff6b35;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sound-option {
+            padding: 8px 12px;
+            background: #0f3460;
+            border-radius: 6px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.85em;
+        }
+        .sound-option:hover { background: #1a4a7a; transform: translateX(3px); }
+        .sound-option.recommended { border-left: 3px solid #4ecdc4; }
+        .sound-option .tag {
+            font-size: 0.7em;
+            color: #888;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Current Decision */
+        .decision-box {
+            background: linear-gradient(135deg, #16213e 0%, #1f2b47 100%);
+            border: 2px solid #ff6b35;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .decision-title {
+            color: #ff6b35;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .option-btn {
+            padding: 12px 20px;
+            background: #0f3460;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #eee;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .option-btn:hover { border-color: #4ecdc4; background: #1a4a7a; }
+        .option-btn.primary { border-color: #4ecdc4; background: #0a3a5a; }
+
+        .notes {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        .notes code {
+            background: #1a1a2e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #4ecdc4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Black Panther Cinematic Beat</h1>
+
+    <div class="song-info">
+        <div><span>Tempo:</span> <strong>78 BPM</strong></div>
+        <div><span>Key:</span> <strong>F Minor</strong></div>
+        <div><span>Vibe:</span> <strong>Cinematic, Intense but Non-Invasive</strong></div>
+    </div>
+
+    <h2>Scene Structure (The Arc)</h2>
+    <div class="timeline">
+        <div class="scene active">
+            <div class="scene-header">
+                <span class="scene-name">1. INTRO</span>
+                <span class="scene-status building">BUILDING</span>
+            </div>
+            <div class="scene-desc">Epic slow build, atmospheric tension</div>
+            <div class="scene-tracks">
+                <div class="track-item">
+                    <span>Drums</span>
+                    <span class="device">-empty-</span>
+                </div>
+                <div class="track-item">
+                    <span>Atmosphere</span>
+                    <span class="device">Deep Background Blender</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scene">
+            <div class="scene-header">
+                <span class="scene-name">2. BASS DROP</span>
+                <span class="scene-status">PENDING</span>
+            </div>
+            <div class="scene-desc">Foundation enters, power emerges</div>
+            <div class="scene-tracks">
+                <div class="track-item">
+                    <span>Drums</span>
+                    <span class="device">?</span>
+                </div>
+                <div class="track-item">
+                    <span>808 Bass</span>
+                    <span class="device">?</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scene">
+            <div class="scene-header">
+                <span class="scene-name">3. SLOW TAP</span>
+                <span class="scene-status">PENDING</span>
+            </div>
+            <div class="scene-desc">Half-pace tapping, different texture, anticipation</div>
+            <div class="scene-tracks">
+                <div class="track-item">
+                    <span>Drums</span>
+                    <span class="device">slow tapping pattern</span>
+                </div>
+                <div class="track-item">
+                    <span>Perc</span>
+                    <span class="device">metallic dings?</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scene complete">
+            <div class="scene-header">
+                <span class="scene-name">4. FULL INTENSITY</span>
+                <span class="scene-status done">READY</span>
+            </div>
+            <div class="scene-desc">Rapid hi-hats, climax moment</div>
+            <div class="scene-tracks">
+                <div class="track-item">
+                    <span>Drums</span>
+                    <span class="device">Golden Era Kit (rapid hats)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="decision-box">
+        <div class="decision-title">CURRENT DECISION: Intro Atmosphere Sound</div>
+        <p style="color: #888; margin-bottom: 15px;">Need: Dark, organic, NOT electronic - cinematic tension builder</p>
+        <div class="options">
+            <button class="option-btn primary">Deep Background Blender</button>
+            <button class="option-btn">Deep Drone</button>
+            <button class="option-btn">Deep Impact Engine</button>
+            <button class="option-btn">Try Something Else</button>
+        </div>
+    </div>
+
+    <h2>Sound Palette (Mood Reel Pack - Cinematic)</h2>
+    <div class="palette">
+        <div class="category">
+            <div class="category-title">Dark Textures</div>
+            <div class="sound-option recommended">
+                Deep Background Blender
+                <span class="tag">atmospheric, evolving</span>
+            </div>
+            <div class="sound-option">
+                Tension Builder
+                <span class="tag">rising, suspense</span>
+            </div>
+            <div class="sound-option">
+                Dark Matter
+                <span class="tag">heavy, ominous</span>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-title">Ethereal Pads</div>
+            <div class="sound-option">
+                Deep Drone
+                <span class="tag">sustained, haunting</span>
+            </div>
+            <div class="sound-option">
+                Celestial Wash
+                <span class="tag">bright, expansive</span>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-title">Tense Pulses</div>
+            <div class="sound-option">
+                Deep Impact Engine
+                <span class="tag">rhythmic tension</span>
+            </div>
+            <div class="sound-option">
+                Heartbeat Pulse
+                <span class="tag">organic rhythm</span>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-title">Percussion (for dings)</div>
+            <div class="sound-option recommended">
+                Metallic Resonance
+                <span class="tag">the "ding ding ding"</span>
+            </div>
+            <div class="sound-option">
+                Tribal Hits
+                <span class="tag">organic, powerful</span>
+            </div>
+            <div class="sound-option">
+                Glass Textures
+                <span class="tag">crystalline, delicate</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="notes">
+        <h3>Quick Reference</h3>
+        <p><strong>What we have:</strong></p>
+        <ul style="margin: 10px 0 10px 20px;">
+            <li>Scene 4 ready: Rapid hi-hats (32nd notes, velocity swells)</li>
+            <li>Track 0: Drums (Golden Era Kit)</li>
+            <li>Track 1: Atmosphere (testing sounds now)</li>
+        </ul>
+        <p><strong>What we need:</strong></p>
+        <ul style="margin: 10px 0 10px 20px;">
+            <li>Dark atmospheric pad for intro (current task)</li>
+            <li>808 sub bass track</li>
+            <li>Metallic "ding" percussion for slow tap section</li>
+            <li>Build transitions between scenes</li>
+        </ul>
+    </div>
+
+</body>
+</html>

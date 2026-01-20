@@ -38,3 +38,6 @@ htmlcov/
 
 # Poetry
 .cache/
+
+# Local Ableton configuration (auto-generated)
+local_browser_cache.json

@@ -1,0 +1,139 @@
+{
+  "description": "Known working device names for track_insert_device. Search is fuzzy - partial matches work.",
+  "how_it_works": "AbletonOSC searches browser.instruments/audio_effects/midi_effects/drums/sounds. Match if: item.name == search OR search in item.name",
+
+  "stock_instruments": [
+    "Wavetable",
+    "Operator",
+    "Simpler",
+    "Sampler",
+    "Drift",
+    "Analog",
+    "Collision",
+    "Electric",
+    "Tension",
+    "Drum Rack",
+    "Instrument Rack"
+  ],
+
+  "stock_audio_effects": [
+    "Reverb",
+    "Hybrid Reverb",
+    "Convolution Reverb",
+    "Delay",
+    "Echo",
+    "Chorus-Ensemble",
+    "Phaser-Flanger",
+    "Compressor",
+    "Glue Compressor",
+    "Multiband Dynamics",
+    "Limiter",
+    "Gate",
+    "EQ Eight",
+    "EQ Three",
+    "Channel EQ",
+    "Auto Filter",
+    "Auto Pan",
+    "Saturator",
+    "Overdrive",
+    "Amp",
+    "Cabinet",
+    "Pedal",
+    "Redux",
+    "Erosion",
+    "Vinyl Distortion",
+    "Corpus",
+    "Resonators",
+    "Vocoder",
+    "Spectral Resonator",
+    "Spectral Time",
+    "Utility",
+    "Tuner",
+    "Spectrum",
+    "Audio Effect Rack"
+  ],
+
+  "stock_midi_effects": [
+    "Arpeggiator",
+    "Chord",
+    "Note Length",
+    "Pitch",
+    "Random",
+    "Scale",
+    "Velocity",
+    "MIDI Effect Rack"
+  ],
+
+  "packs": {
+    "Golden Era Hip-Hop Drums by Sound Oracle": {
+      "kits": [
+        "Always Yours Kit", "Black Squid Kit", "Coldblood Kit", "Day By Day Kit",
+        "Deep Space Kit", "Dex Solar System Kit", "Explination Kit", "Moonroof Kit",
+        "Otari Bounce Kit", "Pain Killer Kit", "Peach Kit", "Slingshot Kit",
+        "Speaking Kit", "Specs Kit", "Sugar Kit", "Swang Bap Kit",
+        "Turn Swing Kit", "Two Worlds Kit", "User One Kit", "Wild Emerald Kit"
+      ],
+      "load_method": "track_insert_device_from_pack(track, 'Kit Name', 'Golden Era Hip-Hop')"
+    },
+    "Electric Keyboards": {
+      "sounds": {
+        "Suitcase Piano": ["Basic Suitcase Amp", "Basic Suitcase DI", "Basic Suitcase Speakers", "Suitcase Blender", "Suitcase Boulevard Funk"],
+        "Wurly Piano": ["Basic Wurly Amp", "Basic Wurly DI", "Basic Wurly Speakers", "Wurly Blender", "Wurly El De-Facto"],
+        "Tonewheel Organ": ["Basic Tonewheel Organ", "Organ Bach 2 Basics", "Organ Funk Shimmer"]
+      },
+      "load_method": "track_insert_device_from_pack(track, 'Suitcase', 'Electric Keyboards')"
+    },
+    "Upright Piano by Spitfire Audio": {
+      "sounds": ["Upright Piano"],
+      "load_method": "track_insert_device_from_pack(track, 'Upright Piano', 'Upright Piano')"
+    },
+    "Grand Piano": {
+      "sounds": ["Grand Piano Equal Solo", "Grand Piano Stretch Solo", "Grand Piano Equal Production"],
+      "load_method": "track_insert_device_from_pack(track, 'Grand Piano', 'Grand Piano')"
+    },
+    "Drum Essentials": {
+      "categories": {
+        "Acoustic": ["Arizona Kit", "Memphis Studio Kit", "Plymouth Kit"],
+        "Drum Machines": ["808 Core Kit", "909 Core Kit", "707 Core Kit", "505 Classic Kit"],
+        "Hybrid": ["Golden Era Kit", "Chicago Kit", "Fairfax Kit", "Laid Back Kit"]
+      },
+      "note": "Golden Era Kit is HERE, not in Golden Era Hip-Hop Drums pack!"
+    },
+    "Chop and Swing": {
+      "drums": ["212 Kit", "Boom Butter Kit", "Canvas Kit", "Full Lotus Kit", "Peace Kit"],
+      "sounds": {
+        "Piano & Keys": ["Dan Piano", "Dirty Back Roads", "Smokey Keys", "Turn To Dust"],
+        "Bass": ["Dirty Sub", "Dusty Bass", "New Old Sub"]
+      }
+    },
+    "Mood Reel": {
+      "instruments": ["Broken Piano", "Krubera Piano", "Glass Harmonica", "Bedroom Kalimba"],
+      "load_method": "track_insert_device_from_pack(track, 'device_name', 'Mood Reel')"
+    },
+    "Lost and Found": {
+      "instruments": ["Music Box", "Prepared Toy Piano", "Wine Glass", "Melodika", "Cigar Box"],
+      "load_method": "track_insert_device_from_pack(track, 'Music Box', 'Lost and Found')"
+    },
+    "Retro Synths": {
+      "categories": ["Analog Bass", "String Machines", "Vector", "Vintage 80s Classics"],
+      "load_method": "track_insert_device_from_pack(track, 'device_name', 'Retro Synths')"
+    },
+    "Synth Essentials": {
+      "categories": ["Bass", "Synth Keys", "Synth Lead", "Synth Pad", "Synth Rhythmic"],
+      "load_method": "track_insert_device(track, 'device_name', device_type='sounds')"
+    }
+  },
+
+  "loading_process": {
+    "step1": "Check this registry for the pack and device name",
+    "step2": "Use track_insert_device_from_pack(track_index, device_name, pack_name)",
+    "step3": "If that fails, try track_insert_device(track_index, device_name, device_type)",
+    "step4": "Verify with track_get_device_names(track_index)"
+  },
+
+  "common_mistakes": [
+    "Golden Era Kit is in DRUM ESSENTIALS, not Golden Era Hip-Hop Drums pack",
+    "Must select track with view_set_selected_track() before inserting device",
+    "Pack names are fuzzy matched - 'Electric Keyboards' matches 'Electric Keyboards'"
+  ]
+}

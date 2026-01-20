@@ -1,0 +1,322 @@
+{
+  "meta": {
+    "name": "Black Panther Beat",
+    "author": "ldraney + claude",
+    "created": "2025-01-19",
+    "description": "Cinematic, intense but non-invasive. Buildup to epic drop at beat 16.",
+    "version": "1.0"
+  },
+  "song": {
+    "bpm": 78,
+    "key": {
+      "root_note": 5,
+      "root_name": "F",
+      "scale": "Minor"
+    },
+    "time_signature": {
+      "numerator": 4,
+      "denominator": 4
+    }
+  },
+  "tracks": [
+    {
+      "index": 0,
+      "name": "Drums",
+      "type": "midi",
+      "device": {
+        "name": "Golden Era Kit",
+        "device_type": "drums",
+        "pack": "Golden Era Hip-Hop Drums by Sound Oracle"
+      },
+      "volume": 0.85,
+      "pan": 0
+    },
+    {
+      "index": 1,
+      "name": "Atmosphere",
+      "type": "midi",
+      "device": {
+        "name": "Deep Impact Engine",
+        "device_type": "instrument",
+        "pack": "Retro Synths"
+      },
+      "volume": 0.85,
+      "pan": 0
+    },
+    {
+      "index": 2,
+      "name": "808 Bass",
+      "type": "midi",
+      "device": {
+        "name": "Dirty Sub",
+        "device_type": "drums",
+        "pack": "Drum Essentials"
+      },
+      "volume": 0.85,
+      "pan": 0
+    },
+    {
+      "index": 3,
+      "name": "Glass Pad",
+      "type": "midi",
+      "device": {
+        "name": "Analog",
+        "device_type": "instrument"
+      },
+      "volume": 0.7,
+      "pan": 0
+    }
+  ],
+  "clips": [
+    {
+      "track": 0,
+      "scene": 0,
+      "name": "Drop Drums",
+      "length": 32,
+      "description": "Kicks at 16,20,24,28 + rapid hi-hats building from velocity 50→100",
+      "notes": [
+        {"pitch": 36, "start_time": 16, "duration": 0.5, "velocity": 100},
+        {"pitch": 36, "start_time": 20, "duration": 0.5, "velocity": 100},
+        {"pitch": 36, "start_time": 24, "duration": 0.5, "velocity": 110},
+        {"pitch": 36, "start_time": 28, "duration": 0.5, "velocity": 110},
+        {"pitch": 42, "start_time": 16.5, "duration": 0.125, "velocity": 50},
+        {"pitch": 42, "start_time": 16.625, "duration": 0.125, "velocity": 45},
+        {"pitch": 42, "start_time": 16.75, "duration": 0.125, "velocity": 55},
+        {"pitch": 42, "start_time": 17, "duration": 0.125, "velocity": 60},
+        {"pitch": 42, "start_time": 17.125, "duration": 0.125, "velocity": 50},
+        {"pitch": 42, "start_time": 17.25, "duration": 0.125, "velocity": 65},
+        {"pitch": 42, "start_time": 17.5, "duration": 0.125, "velocity": 70},
+        {"pitch": 42, "start_time": 17.625, "duration": 0.125, "velocity": 55},
+        {"pitch": 42, "start_time": 17.75, "duration": 0.125, "velocity": 75},
+        {"pitch": 42, "start_time": 17.875, "duration": 0.125, "velocity": 60},
+        {"pitch": 42, "start_time": 18.5, "duration": 0.125, "velocity": 50},
+        {"pitch": 42, "start_time": 18.625, "duration": 0.125, "velocity": 60},
+        {"pitch": 42, "start_time": 18.75, "duration": 0.125, "velocity": 70},
+        {"pitch": 42, "start_time": 18.875, "duration": 0.125, "velocity": 75},
+        {"pitch": 42, "start_time": 19, "duration": 0.125, "velocity": 80},
+        {"pitch": 42, "start_time": 19.125, "duration": 0.125, "velocity": 70},
+        {"pitch": 42, "start_time": 19.25, "duration": 0.125, "velocity": 85},
+        {"pitch": 42, "start_time": 20.25, "duration": 0.125, "velocity": 55},
+        {"pitch": 42, "start_time": 20.375, "duration": 0.125, "velocity": 60},
+        {"pitch": 42, "start_time": 20.5, "duration": 0.125, "velocity": 65},
+        {"pitch": 42, "start_time": 20.625, "duration": 0.125, "velocity": 70},
+        {"pitch": 42, "start_time": 20.75, "duration": 0.125, "velocity": 75},
+        {"pitch": 42, "start_time": 20.875, "duration": 0.125, "velocity": 80},
+        {"pitch": 42, "start_time": 21, "duration": 0.125, "velocity": 85},
+        {"pitch": 42, "start_time": 21.125, "duration": 0.125, "velocity": 75},
+        {"pitch": 42, "start_time": 21.25, "duration": 0.125, "velocity": 90},
+        {"pitch": 42, "start_time": 21.375, "duration": 0.125, "velocity": 80},
+        {"pitch": 42, "start_time": 21.5, "duration": 0.125, "velocity": 95},
+        {"pitch": 42, "start_time": 21.625, "duration": 0.125, "velocity": 85},
+        {"pitch": 42, "start_time": 21.75, "duration": 0.125, "velocity": 95},
+        {"pitch": 42, "start_time": 21.875, "duration": 0.125, "velocity": 90},
+        {"pitch": 42, "start_time": 22, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 22.125, "duration": 0.125, "velocity": 90},
+        {"pitch": 42, "start_time": 22.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 22.375, "duration": 0.125, "velocity": 95},
+        {"pitch": 42, "start_time": 22.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 22.625, "duration": 0.125, "velocity": 95},
+        {"pitch": 42, "start_time": 22.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 22.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 23.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 24.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 24.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 24.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 24.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 24.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 24.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 25.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 26.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 27.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 28.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 28.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 28.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 28.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 28.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 28.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 29.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 30.875, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.125, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.25, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.375, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.5, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.625, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.75, "duration": 0.125, "velocity": 100},
+        {"pitch": 42, "start_time": 31.875, "duration": 0.125, "velocity": 100}
+      ],
+      "note_info": {
+        "36": "Kick drum",
+        "42": "Hi-hat"
+      }
+    },
+    {
+      "track": 1,
+      "scene": 0,
+      "name": "Atmosphere Buildup",
+      "length": 32,
+      "description": "F minor chord building: F2→F3→Ab3→C4 entering at beats 0,4,8,12",
+      "notes": [
+        {"pitch": 41, "start_time": 0, "duration": 32, "velocity": 40},
+        {"pitch": 53, "start_time": 4, "duration": 28, "velocity": 45},
+        {"pitch": 56, "start_time": 8, "duration": 24, "velocity": 50},
+        {"pitch": 60, "start_time": 12, "duration": 20, "velocity": 55}
+      ],
+      "note_info": {
+        "41": "F2 - root (lowest)",
+        "53": "F3 - root octave",
+        "56": "Ab3 - minor third",
+        "60": "C4 - fifth"
+      }
+    },
+    {
+      "track": 2,
+      "scene": 0,
+      "name": "808 Drop",
+      "length": 32,
+      "description": "One long bass note at the DROP - F1",
+      "notes": [
+        {"pitch": 29, "start_time": 16, "duration": 16, "velocity": 110}
+      ],
+      "note_info": {
+        "29": "F1 - sub bass"
+      }
+    },
+    {
+      "track": 3,
+      "scene": 0,
+      "name": "Glass Texture",
+      "length": 16,
+      "description": "Sustained pads + rhythmic hi-hat texture throughout",
+      "notes": [
+        {"pitch": 36, "start_time": 0, "duration": 16, "velocity": 60},
+        {"pitch": 36, "start_time": 16, "duration": 16, "velocity": 60},
+        {"pitch": 38, "start_time": 0, "duration": 16, "velocity": 50},
+        {"pitch": 40, "start_time": 16, "duration": 16, "velocity": 50},
+        {"pitch": 42, "start_time": 0, "duration": 0.25, "velocity": 80},
+        {"pitch": 42, "start_time": 0.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 1, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 1.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 2, "duration": 0.25, "velocity": 75},
+        {"pitch": 42, "start_time": 2.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 3, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 3.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 4, "duration": 0.25, "velocity": 80},
+        {"pitch": 42, "start_time": 4.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 5, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 5.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 6, "duration": 0.25, "velocity": 75},
+        {"pitch": 42, "start_time": 6.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 7, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 7.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 8, "duration": 0.25, "velocity": 80},
+        {"pitch": 42, "start_time": 8.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 9, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 9.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 10, "duration": 0.25, "velocity": 75},
+        {"pitch": 42, "start_time": 10.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 11, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 11.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 12, "duration": 0.25, "velocity": 80},
+        {"pitch": 42, "start_time": 12.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 13, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 13.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 42, "start_time": 14, "duration": 0.25, "velocity": 75},
+        {"pitch": 42, "start_time": 14.5, "duration": 0.25, "velocity": 60},
+        {"pitch": 42, "start_time": 15, "duration": 0.25, "velocity": 70},
+        {"pitch": 42, "start_time": 15.5, "duration": 0.25, "velocity": 55},
+        {"pitch": 45, "start_time": 0, "duration": 32, "velocity": 60},
+        {"pitch": 52, "start_time": 0, "duration": 32, "velocity": 50}
+      ],
+      "note_info": {
+        "36": "Low sustained note",
+        "38": "Mid sustained note (first half)",
+        "40": "Mid sustained note (second half)",
+        "42": "Rhythmic texture",
+        "45": "A2 - sustained pad",
+        "52": "E3 - sustained pad"
+      }
+    }
+  ],
+  "structure": {
+    "total_length_beats": 32,
+    "sections": [
+      {
+        "name": "Buildup",
+        "start_beat": 0,
+        "end_beat": 16,
+        "description": "Atmosphere builds with staggered chord entries. Glass pad provides texture.",
+        "elements": ["Atmosphere chord stack building", "Glass Pad texture"]
+      },
+      {
+        "name": "DROP",
+        "beat": 16,
+        "description": "Everything hits at once - the moment of impact",
+        "elements": ["First kick", "808 bass enters", "Hi-hats begin"]
+      },
+      {
+        "name": "Intensity",
+        "start_beat": 16,
+        "end_beat": 32,
+        "description": "Full energy - all elements at maximum",
+        "elements": ["Kicks on 16,20,24,28", "Continuous hi-hats", "808 sustaining", "Full atmosphere"]
+      }
+    ]
+  },
+  "rebuild_instructions": {
+    "summary": "To recreate this song from scratch in Ableton:",
+    "steps": [
+      "song_set_tempo(78)",
+      "song_set_root_note(5)",
+      "song_set_scale_name('Minor')",
+      "Create 4 MIDI tracks",
+      "track_set_name(0, 'Drums'), track_set_name(1, 'Atmosphere'), etc.",
+      "Select track and load devices: track_insert_device(0, 'Golden Era', device_type='drums')",
+      "Create 32-beat clips: clip_slot_create_clip(track, 0, 32)",
+      "Add notes to each clip using clip_add_notes()",
+      "scene_fire(0) then song_play()"
+    ]
+  }
+}
