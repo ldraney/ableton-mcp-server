@@ -437,13 +437,14 @@ def register_track_tools(mcp):
             if not matches:
                 return f"No {device_type} found matching '{device_name}'. Available: {items[:10]}..."
 
-            # Load the first match
+            # Load the first match using track.insert_device
+            # (browser.load_item expects a full path, not a name)
             best_match = matches[0]
-            success = browser.load_item(best_match)
+            result = track.insert_device(track_index, best_match, device_index)
             time.sleep(0.3)
 
-            if success:
-                return f"Loaded {device_type} '{best_match}' on track {track_index}"
+            if result != -1:
+                return f"Loaded {device_type} '{best_match}' on track {track_index} at index {result}"
             else:
                 return f"Found '{best_match}' but failed to load it"
 
