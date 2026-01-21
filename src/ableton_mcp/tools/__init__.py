@@ -12,9 +12,11 @@ Tools are organized by domain:
 - midimap: MIDI mapping operations (CC mapping)
 - browser: Browser operations (pack exploration, search, device loading)
 - export: Audio export operations (record to MP3/WAV via FFmpeg)
+- executor: Song-schema execution (play songs with timing, record to arrangement)
 """
 
 from ableton_mcp.tools.song import register_song_tools
+from ableton_mcp.tools.executor import register_executor_tools
 from ableton_mcp.tools.track import register_track_tools
 from ableton_mcp.tools.clip import register_clip_tools
 from ableton_mcp.tools.clip_slot import register_clip_slot_tools
@@ -44,6 +46,7 @@ def register_all_tools(mcp):
     register_midimap_tools(mcp)
     register_browser_tools(mcp)
     register_export_tools(mcp)
+    register_executor_tools(mcp)
 
 
 __all__ = [
@@ -59,4 +62,5 @@ __all__ = [
     "register_midimap_tools",
     "register_browser_tools",
     "register_export_tools",
+    "register_executor_tools",
 ]

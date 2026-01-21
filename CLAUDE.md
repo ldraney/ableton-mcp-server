@@ -90,6 +90,22 @@ Tools are organized by domain, matching the OSC client structure:
   - Windows: Stereo Mix enabled, or VB-Cable virtual audio device
   - macOS: BlackHole or similar virtual audio device
 
+### Executor Tools
+- `song_execute` - Execute a song-schema JSON file with proper timing and optional recording
+- `song_execute_info` - Preview song structure and timing without executing
+
+**Usage:**
+```python
+# Execute and record to arrangement view
+song_execute("~/song-schema/examples/deep-sine-track.json", record=True)
+
+# Dry run - just see timing info
+song_execute("~/song-schema/examples/deep-sine-track.json", dry_run=True)
+
+# Or use the info-only tool
+song_execute_info("~/song-schema/examples/deep-sine-track.json")
+```
+
 ## Device Discovery
 
 ### Pack Locations on Disk
