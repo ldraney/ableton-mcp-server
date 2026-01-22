@@ -11,6 +11,7 @@ Tools are organized by domain:
 - application: Application operations (version, testing, messaging)
 - midimap: MIDI mapping operations (CC mapping)
 - browser: Browser operations (pack exploration, search, device loading)
+- export: Audio export operations (record to MP3/WAV via FFmpeg)
 """
 
 from ableton_mcp.tools.song import register_song_tools
@@ -23,6 +24,7 @@ from ableton_mcp.tools.view import register_view_tools
 from ableton_mcp.tools.application import register_application_tools
 from ableton_mcp.tools.midimap import register_midimap_tools
 from ableton_mcp.tools.browser import register_browser_tools
+from ableton_mcp.tools.export import register_export_tools
 
 
 def register_all_tools(mcp):
@@ -41,6 +43,7 @@ def register_all_tools(mcp):
     register_application_tools(mcp)
     register_midimap_tools(mcp)
     register_browser_tools(mcp)
+    register_export_tools(mcp)
 
 
 __all__ = [
@@ -55,4 +58,5 @@ __all__ = [
     "register_application_tools",
     "register_midimap_tools",
     "register_browser_tools",
+    "register_export_tools",
 ]
