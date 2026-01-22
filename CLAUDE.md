@@ -77,6 +77,19 @@ Tools are organized by domain, matching the OSC client structure:
 ### View Tools
 - `view_select_track` / `view_select_scene`
 
+### Export Tools
+- `song_export_audio` - Export song to MP3/WAV by recording Ableton's audio output via FFmpeg
+- `song_get_duration_seconds` - Calculate song duration in seconds from beats and tempo
+- `export_list_audio_devices` - List available audio capture devices
+- `export_test_audio_capture` - Test audio capture without Ableton playback
+
+**Prerequisites for export:**
+- FFmpeg installed (`sudo apt install ffmpeg` on Linux)
+- Audio loopback device available:
+  - Linux: PulseAudio monitor (default with WSLg) or ALSA loopback
+  - Windows: Stereo Mix enabled, or VB-Cable virtual audio device
+  - macOS: BlackHole or similar virtual audio device
+
 ## Device Discovery
 
 ### Pack Locations on Disk
