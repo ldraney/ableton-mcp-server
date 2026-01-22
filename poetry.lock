@@ -17,7 +17,7 @@ python-osc = ">=1.8.0"
 type = "git"
 url = "https://github.com/ldraney/ableton-music-development.git"
 reference = "HEAD"
-resolved_reference = "8a6d0174f4f5458e8e7e4f4f7c3632ab06ff6d5b"
+resolved_reference = "f288d342897a95fe098339010a835f34406815c2"
 
 [[package]]
 name = "annotated-types"
