@@ -220,6 +220,7 @@ def register_export_tools(mcp):
         """
         system = platform.system()
         is_wsl = _is_wsl()
+        has_wslg = os.path.exists("/mnt/wslg/PulseServer")
 
         all_devices = []
 
@@ -227,8 +228,9 @@ def register_export_tools(mcp):
         if system == "Linux":
             all_devices.extend(_list_audio_devices_linux())
 
-        # WSL or Windows - get Windows devices
-        if is_wsl or system == "Windows":
+        # WSL without WSLg, or native Windows - try Windows devices
+        # Skip if WSLg is available since we can use PulseAudio directly
+        if (is_wsl and not has_wslg) or system == "Windows":
             all_devices.extend(_list_audio_devices_windows())
 
         if not all_devices:
