@@ -61,16 +61,17 @@ def _find_ffmpeg() -> str:
     )
 
 
-def _get_default_audio_device() -> tuple[str, str]:
+def _get_default_audio_device() -> tuple[str, str, dict]:
     """Get default audio capture device and format for the current platform.
 
     Returns:
-        Tuple of (device_name, input_format)
+        Tuple of (device_name, input_format, env_vars)
 
     Raises:
         RuntimeError: If no suitable device is found
     """
     system = platform.system()
+    env_vars = {}
 
     if system == "Linux" or _is_wsl():
         # For WSL2, we need to capture Windows audio
@@ -78,21 +79,21 @@ def _get_default_audio_device() -> tuple[str, str]:
         # Options: 1) Use PulseAudio with WSLg, 2) Call Windows FFmpeg
 
         # Check for PulseAudio (WSLg)
-        if os.path.exists("/mnt/wslg"):
-            # WSLg available - use PulseAudio
-            # The default monitor captures all output
-            return ("default", "pulse")
+        if os.path.exists("/mnt/wslg/PulseServer"):
+            # WSLg available - use PulseAudio with correct socket
+            env_vars["PULSE_SERVER"] = "/mnt/wslg/PulseServer"
+            return ("default", "pulse", env_vars)
 
         # Fallback: try ALSA
-        return ("default", "alsa")
+        return ("default", "alsa", env_vars)
 
     elif system == "Darwin":
         # macOS - need BlackHole or similar virtual audio device
-        return ("BlackHole 2ch", "avfoundation")
+        return ("BlackHole 2ch", "avfoundation", env_vars)
 
     elif system == "Windows":
         # Windows - Stereo Mix or virtual audio cable
-        return ("Stereo Mix (Realtek(R) Audio)", "dshow")
+        return ("Stereo Mix (Realtek(R) Audio)", "dshow", env_vars)
 
     raise RuntimeError(f"Unsupported platform: {system}")
 
@@ -101,11 +102,25 @@ def _list_audio_devices_linux() -> list[dict]:
     """List audio devices on Linux."""
     devices = []
 
-    # Try PulseAudio
+    # Check for WSLg PulseAudio
+    if os.path.exists("/mnt/wslg/PulseServer"):
+        devices.append({
+            "name": "default",
+            "format": "pulse",
+            "type": "wslg",
+            "note": "WSLg PulseAudio - captures Windows audio"
+        })
+
+    # Try PulseAudio with pactl (if available)
+    pulse_env = os.environ.copy()
+    if os.path.exists("/mnt/wslg/PulseServer"):
+        pulse_env["PULSE_SERVER"] = "/mnt/wslg/PulseServer"
+
     try:
         result = subprocess.run(
             ["pactl", "list", "sources", "short"],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=5,
+            env=pulse_env
         )
         if result.returncode == 0:
             for line in result.stdout.strip().split("\n"):
@@ -117,6 +132,9 @@ def _list_audio_devices_linux() -> list[dict]:
                             "format": "pulse",
                             "type": "monitor" if "monitor" in parts[1].lower() else "input"
                         })
+    except FileNotFoundError:
+        # pactl not installed - that's OK if we have WSLg
+        pass
     except Exception:
         pass
 
@@ -284,8 +302,9 @@ def register_export_tools(mcp):
             duration_seconds += 2.0
 
         # Get audio device settings
+        env_vars = {}
         if audio_device is None or audio_format is None:
-            default_device, default_format = _get_default_audio_device()
+            default_device, default_format, env_vars = _get_default_audio_device()
             audio_device = audio_device or default_device
             audio_format = audio_format or default_format
 
@@ -335,10 +354,15 @@ def register_export_tools(mcp):
 
         # Start FFmpeg recording
         try:
+            # Merge environment variables with current environment
+            run_env = os.environ.copy()
+            run_env.update(env_vars)
+
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                env=run_env
             )
         except Exception as e:
             return f"Failed to start FFmpeg: {e}\nCommand: {' '.join(cmd)}"
