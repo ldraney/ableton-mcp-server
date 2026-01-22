@@ -377,7 +377,7 @@ def register_export_tools(mcp):
             # Reset to beginning
             song.set_current_song_time(0)
             time.sleep(0.1)
-            song.play()
+            song.start_playing()
 
         # Wait for FFmpeg to complete
         try:
@@ -388,7 +388,7 @@ def register_export_tools(mcp):
 
         # Stop Ableton playback
         if start_playback:
-            song.stop()
+            song.stop_playing()
 
         # Check result
         if process.returncode != 0:
