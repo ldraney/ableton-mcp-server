@@ -10,7 +10,7 @@ packages = [{include = "ableton_mcp", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 fastmcp = ">=2.3.4"
-abletonosc-client = {path = "../ableton-music-development", develop = true}
+abletonosc-client = {git = "https://github.com/ldraney/ableton-music-development.git"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.0"
