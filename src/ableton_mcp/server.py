@@ -16,7 +16,7 @@ register_all_tools(mcp)
 
 def main():
     """Run the MCP server."""
-    mcp.run()
+    mcp.run(transport="stdio", show_banner=False)
 
 
 if __name__ == "__main__":
