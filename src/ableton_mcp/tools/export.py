@@ -7,6 +7,7 @@ system audio capture as a workaround.
 
 import os
 import platform
+import re
 import shutil
 import subprocess
 import time
@@ -183,6 +184,41 @@ def _list_audio_devices_linux() -> list[dict]:
     return devices
 
 
+def _list_audio_devices_macos() -> list[dict]:
+    """List audio devices on macOS using avfoundation."""
+    devices = []
+
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-f", "avfoundation", "-list_devices", "true", "-i", ""],
+            capture_output=True, text=True, timeout=10
+        )
+        # FFmpeg outputs device list to stderr
+        output = result.stderr
+        in_audio_section = False
+
+        for line in output.split("\n"):
+            if "AVFoundation audio devices" in line:
+                in_audio_section = True
+                continue
+            if in_audio_section and "[" in line and "]" in line:
+                # Parse: [AVFoundation indev @ ...] [0] Device Name
+                match = re.search(r'\[(\d+)\]\s+(.+)$', line)
+                if match:
+                    device_index = match.group(1)
+                    device_name = match.group(2).strip()
+                    devices.append({
+                        "name": device_name,
+                        "index": device_index,
+                        "format": "avfoundation",
+                        "type": "audio"
+                    })
+    except Exception as e:
+        devices.append({"error": str(e)})
+
+    return devices
+
+
 def _list_audio_devices_windows() -> list[dict]:
     """List audio devices on Windows (or via WSL cmd.exe)."""
     devices = []
@@ -261,6 +297,9 @@ def register_export_tools(mcp):
         elif system == "Linux":
             # Native Linux - get Linux devices
             all_devices.extend(_list_audio_devices_linux())
+        elif system == "Darwin":
+            # macOS - list avfoundation devices
+            all_devices.extend(_list_audio_devices_macos())
         elif system == "Windows":
             all_devices.extend(_list_audio_devices_windows())
 
