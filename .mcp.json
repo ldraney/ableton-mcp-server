@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "ableton": {
-      "command": "poetry",
-      "args": ["run", "ableton-mcp"],
-      "cwd": ".",
+      "command": "uvx",
+      "args": ["ableton-mcp-server"],
       "description": "Control Ableton Live via OSC. Create tracks, add MIDI clips with notes, control tempo/transport, and manipulate the session view. Requires Ableton Live running with AbletonOSC enabled."
     }
   }
