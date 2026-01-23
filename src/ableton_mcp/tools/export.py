@@ -61,11 +61,37 @@ def _find_ffmpeg() -> str:
     )
 
 
-def _get_default_audio_device() -> tuple[str, str, dict]:
+def _find_windows_ffmpeg() -> str | None:
+    """Find Windows FFmpeg path from WSL.
+
+    Returns:
+        Windows path to ffmpeg.exe, or None if not found
+    """
+    try:
+        result = subprocess.run(
+            ["wslpath", "-u", "/mnt/c/Windows/System32/cmd.exe"],
+            capture_output=True, text=True, timeout=5
+        )
+        # If wslpath works, try to find ffmpeg via where command
+        result = subprocess.run(
+            "cmd.exe /c where ffmpeg 2>/dev/null",
+            shell=True,
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            # Convert Windows path to WSL path
+            win_path = result.stdout.strip().split("\n")[0].strip()
+            return win_path
+    except Exception:
+        pass
+    return None
+
+
+def _get_default_audio_device() -> tuple[str, str, dict, bool]:
     """Get default audio capture device and format for the current platform.
 
     Returns:
-        Tuple of (device_name, input_format, env_vars)
+        Tuple of (device_name, input_format, env_vars, use_windows_ffmpeg)
 
     Raises:
         RuntimeError: If no suitable device is found
@@ -73,27 +99,25 @@ def _get_default_audio_device() -> tuple[str, str, dict]:
     system = platform.system()
     env_vars = {}
 
-    if system == "Linux" or _is_wsl():
-        # For WSL2, we need to capture Windows audio
-        # This is tricky - WSL2 doesn't have direct audio access
-        # Options: 1) Use PulseAudio with WSLg, 2) Call Windows FFmpeg
+    if _is_wsl():
+        # WSL2 with Ableton on Windows - MUST use Windows FFmpeg + Stereo Mix
+        # WSLg PulseAudio only captures Linux audio, not Windows audio
+        return ("Stereo Mix (Realtek High Definition Audio)", "dshow", env_vars, True)
 
-        # Check for PulseAudio (WSLg)
-        if os.path.exists("/mnt/wslg/PulseServer"):
-            # WSLg available - use PulseAudio with correct socket
-            env_vars["PULSE_SERVER"] = "/mnt/wslg/PulseServer"
-            return ("default", "pulse", env_vars)
-
+    if system == "Linux":
+        # Native Linux - use PulseAudio
+        if os.path.exists("/run/user"):
+            return ("default", "pulse", env_vars, False)
         # Fallback: try ALSA
-        return ("default", "alsa", env_vars)
+        return ("default", "alsa", env_vars, False)
 
     elif system == "Darwin":
         # macOS - need BlackHole or similar virtual audio device
-        return ("BlackHole 2ch", "avfoundation", env_vars)
+        return ("BlackHole 2ch", "avfoundation", env_vars, False)
 
     elif system == "Windows":
-        # Windows - Stereo Mix or virtual audio cable
-        return ("Stereo Mix (Realtek(R) Audio)", "dshow", env_vars)
+        # Native Windows - Stereo Mix or virtual audio cable
+        return ("Stereo Mix (Realtek High Definition Audio)", "dshow", env_vars, False)
 
     raise RuntimeError(f"Unsupported platform: {system}")
 
@@ -220,17 +244,24 @@ def register_export_tools(mcp):
         """
         system = platform.system()
         is_wsl = _is_wsl()
-        has_wslg = os.path.exists("/mnt/wslg/PulseServer")
 
         all_devices = []
 
-        # Linux/WSL - get Linux devices
-        if system == "Linux":
+        if is_wsl:
+            # WSL2 with Ableton on Windows - MUST use Windows FFmpeg
+            # WSLg PulseAudio only captures Linux audio, not Windows audio
+            all_devices.append({
+                "name": "Stereo Mix (Realtek High Definition Audio)",
+                "format": "dshow",
+                "type": "windows",
+                "note": "WSL2 uses Windows FFmpeg to capture Ableton audio. Enable Stereo Mix in Windows Sound settings."
+            })
+            # Also try to list actual Windows devices
+            all_devices.extend(_list_audio_devices_windows())
+        elif system == "Linux":
+            # Native Linux - get Linux devices
             all_devices.extend(_list_audio_devices_linux())
-
-        # WSL without WSLg, or native Windows - try Windows devices
-        # Skip if WSLg is available since we can use PulseAudio directly
-        if (is_wsl and not has_wslg) or system == "Windows":
+        elif system == "Windows":
             all_devices.extend(_list_audio_devices_windows())
 
         if not all_devices:
@@ -286,12 +317,6 @@ def register_export_tools(mcp):
         Returns:
             Success message with output file path, or error details
         """
-        # Find FFmpeg
-        try:
-            ffmpeg_path = _find_ffmpeg()
-        except FileNotFoundError as e:
-            return str(e)
-
         # Get song for playback control
         song = Song(get_client())
 
@@ -305,8 +330,9 @@ def register_export_tools(mcp):
 
         # Get audio device settings
         env_vars = {}
+        use_windows_ffmpeg = False
         if audio_device is None or audio_format is None:
-            default_device, default_format, env_vars = _get_default_audio_device()
+            default_device, default_format, env_vars, use_windows_ffmpeg = _get_default_audio_device()
             audio_device = audio_device or default_device
             audio_format = audio_format or default_format
 
@@ -315,44 +341,94 @@ def register_export_tools(mcp):
         if output_ext not in [".mp3", ".wav", ".flac", ".ogg", ".m4a"]:
             return f"Unsupported output format: {output_ext}. Use .mp3, .wav, .flac, .ogg, or .m4a"
 
+        # Convert output path for Windows if needed
+        actual_output_file = output_file
+        if use_windows_ffmpeg:
+            # Convert WSL path to Windows path
+            if output_file.startswith("/mnt/"):
+                # /mnt/c/Users/... -> C:\Users\...
+                parts = output_file.split("/")
+                drive = parts[2].upper()
+                rest = "\\".join(parts[3:])
+                actual_output_file = f"{drive}:\\{rest}"
+            elif output_file.startswith("/tmp/"):
+                # Use Windows temp directory
+                actual_output_file = f"C:\\Temp\\{os.path.basename(output_file)}"
+                # Ensure C:\Temp exists
+                subprocess.run("cmd.exe /c mkdir C:\\Temp 2>nul", shell=True)
+            else:
+                return f"For WSL2, output path must start with /mnt/ or /tmp/. Got: {output_file}"
+
         # Build FFmpeg command
-        cmd = [
-            ffmpeg_path,
-            "-y",  # Overwrite output
-            "-f", audio_format,
-        ]
+        if use_windows_ffmpeg:
+            # Use Windows FFmpeg via cmd.exe for capturing Windows audio
+            ffmpeg_args = [
+                "ffmpeg", "-y",
+                "-f", audio_format,
+                "-i", f"audio={audio_device}",
+                "-t", str(duration_seconds),
+                "-ar", str(sample_rate),
+                "-ac", "2",
+            ]
 
-        # Add device-specific input options
-        if audio_format == "pulse":
-            cmd.extend(["-i", audio_device])
-        elif audio_format == "alsa":
-            cmd.extend(["-i", f"hw:{audio_device}"])
-        elif audio_format == "dshow":
-            cmd.extend(["-i", f"audio={audio_device}"])
-        elif audio_format == "avfoundation":
-            cmd.extend(["-i", f":{audio_device}"])
+            # Add codec settings based on output format
+            if output_ext == ".mp3":
+                ffmpeg_args.extend(["-codec:a", "libmp3lame", "-q:a", "2"])
+            elif output_ext == ".flac":
+                ffmpeg_args.extend(["-codec:a", "flac"])
+            elif output_ext == ".ogg":
+                ffmpeg_args.extend(["-codec:a", "libvorbis", "-q:a", "6"])
+            elif output_ext == ".m4a":
+                ffmpeg_args.extend(["-codec:a", "aac", "-b:a", "256k"])
+
+            ffmpeg_args.append(f'"{actual_output_file}"')
+
+            # Build cmd.exe command
+            cmd = ["cmd.exe", "/c", " ".join(ffmpeg_args)]
         else:
-            cmd.extend(["-i", audio_device])
+            # Use Linux FFmpeg
+            try:
+                ffmpeg_path = _find_ffmpeg()
+            except FileNotFoundError as e:
+                return str(e)
 
-        # Add duration and output settings
-        cmd.extend([
-            "-t", str(duration_seconds),
-            "-ar", str(sample_rate),
-            "-ac", "2",  # Stereo
-        ])
+            cmd = [
+                ffmpeg_path,
+                "-y",  # Overwrite output
+                "-f", audio_format,
+            ]
 
-        # Add codec settings based on output format
-        if output_ext == ".mp3":
-            cmd.extend(["-codec:a", "libmp3lame", "-q:a", "2"])
-        elif output_ext == ".flac":
-            cmd.extend(["-codec:a", "flac"])
-        elif output_ext == ".ogg":
-            cmd.extend(["-codec:a", "libvorbis", "-q:a", "6"])
-        elif output_ext == ".m4a":
-            cmd.extend(["-codec:a", "aac", "-b:a", "256k"])
-        # WAV uses default PCM codec
+            # Add device-specific input options
+            if audio_format == "pulse":
+                cmd.extend(["-i", audio_device])
+            elif audio_format == "alsa":
+                cmd.extend(["-i", f"hw:{audio_device}"])
+            elif audio_format == "dshow":
+                cmd.extend(["-i", f"audio={audio_device}"])
+            elif audio_format == "avfoundation":
+                cmd.extend(["-i", f":{audio_device}"])
+            else:
+                cmd.extend(["-i", audio_device])
 
-        cmd.append(output_file)
+            # Add duration and output settings
+            cmd.extend([
+                "-t", str(duration_seconds),
+                "-ar", str(sample_rate),
+                "-ac", "2",  # Stereo
+            ])
+
+            # Add codec settings based on output format
+            if output_ext == ".mp3":
+                cmd.extend(["-codec:a", "libmp3lame", "-q:a", "2"])
+            elif output_ext == ".flac":
+                cmd.extend(["-codec:a", "flac"])
+            elif output_ext == ".ogg":
+                cmd.extend(["-codec:a", "libvorbis", "-q:a", "6"])
+            elif output_ext == ".m4a":
+                cmd.extend(["-codec:a", "aac", "-b:a", "256k"])
+            # WAV uses default PCM codec
+
+            cmd.append(output_file)
 
         # Start FFmpeg recording
         try:
@@ -364,10 +440,11 @@ def register_export_tools(mcp):
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                env=run_env
+                env=run_env,
+                shell=use_windows_ffmpeg  # Need shell for cmd.exe
             )
         except Exception as e:
-            return f"Failed to start FFmpeg: {e}\nCommand: {' '.join(cmd)}"
+            return f"Failed to start FFmpeg: {e}\nCommand: {' '.join(cmd) if isinstance(cmd, list) else cmd}"
 
         # Give FFmpeg a moment to initialize
         time.sleep(0.5)
@@ -393,14 +470,29 @@ def register_export_tools(mcp):
         # Check result
         if process.returncode != 0:
             error_msg = stderr.decode() if stderr else "Unknown error"
-            return f"FFmpeg failed (exit code {process.returncode}):\n{error_msg}\nCommand: {' '.join(cmd)}"
+            return f"FFmpeg failed (exit code {process.returncode}):\n{error_msg}\nCommand: {cmd}"
+
+        # Handle Windows temp file - copy back to Linux path
+        if use_windows_ffmpeg and output_file.startswith("/tmp/"):
+            # Copy from C:\Temp to /tmp/
+            win_temp_file = f"/mnt/c/Temp/{os.path.basename(output_file)}"
+            if os.path.exists(win_temp_file):
+                shutil.copy(win_temp_file, output_file)
+                os.remove(win_temp_file)
 
         # Verify output file exists
         if os.path.exists(output_file):
             file_size = os.path.getsize(output_file)
             return f"Successfully exported to {output_file} ({file_size / 1024:.1f} KB, {duration_seconds:.1f}s)"
         else:
-            return f"FFmpeg completed but output file not found: {output_file}"
+            # Check if Windows file exists at the converted path
+            if use_windows_ffmpeg and actual_output_file != output_file:
+                # Try to find the file via WSL path
+                if output_file.startswith("/mnt/"):
+                    if os.path.exists(output_file):
+                        file_size = os.path.getsize(output_file)
+                        return f"Successfully exported to {output_file} ({file_size / 1024:.1f} KB, {duration_seconds:.1f}s)"
+            return f"FFmpeg completed but output file not found: {output_file} (Windows path: {actual_output_file})"
 
     @mcp.tool()
     def export_test_audio_capture(
