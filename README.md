@@ -2,7 +2,28 @@
 
 **Control Ableton Live with AI through natural conversation.**
 
-An MCP (Model Context Protocol) server that exposes 260+ tools for controlling Ableton Live from Claude Code and other AI assistants. Create tracks, manipulate MIDI, load instruments, and produce music—all through natural language.
+An MCP (Model Context Protocol) server that exposes 260+ tools for controlling Ableton Live from Claude Code. Create tracks, manipulate MIDI, load instruments, and produce music—all through natural language.
+
+## Quick Start
+
+```bash
+# 1. Clone and install
+git clone https://github.com/ldraney/ableton-mcp-server.git
+cd ableton-mcp-server
+poetry install
+
+# 2. Start Ableton Live 12 with AbletonOSC enabled
+
+# 3. Start Claude Code in this directory
+claude
+
+# 4. Just ask for what you want!
+```
+
+**That's it.** Claude reads the project documentation and knows how to guide you through creating music. Try:
+- "Create a lo-fi beat"
+- "Make a simple drum pattern"
+- "Help me set up audio export"
 
 ## Why This Exists
 
@@ -131,6 +152,7 @@ The server auto-detects WSL2 environments and configures the correct Windows hos
 
 | Project | Description |
 |---------|-------------|
+| [song-schema](https://github.com/ldraney/song-schema) | Define songs as JSON, execute them in Ableton (included as dependency) |
 | [ableton-music-development](https://github.com/ldraney/ableton-music-development) | Python OSC client wrapper for Ableton |
 | [AbletonOSC](https://github.com/ideoforms/AbletonOSC) | The MIDI Remote Script that makes this possible |
 

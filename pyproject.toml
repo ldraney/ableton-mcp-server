@@ -11,6 +11,7 @@ packages = [{include = "ableton_mcp", from = "src"}]
 python = ">=3.11,<4.0"
 fastmcp = ">=2.3.4"
 abletonosc-client = {git = "https://github.com/ldraney/abletonosc-client.git"}
+song-schema = ">=0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.0"

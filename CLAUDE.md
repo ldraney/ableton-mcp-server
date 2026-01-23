@@ -1,5 +1,62 @@
 # Ableton MCP Server
 
+## Getting Started
+
+### Quick Start (New Users)
+
+1. **Install dependencies:**
+   ```bash
+   poetry install
+   ```
+
+2. **Start Ableton Live 12** with AbletonOSC enabled (Preferences → Link/Tempo/MIDI → Control Surface = AbletonOSC)
+
+3. **That's it!** Now just ask me what you want to create. Examples:
+   - "Create a lo-fi beat with drums, bass, and keys"
+   - "Make a simple 4-bar loop with a kick on 1 and 3"
+   - "Load a piano and play a C major chord"
+
+### Song Development Workflow
+
+There are two ways to create music:
+
+**1. Conversational (Interactive)**
+Just describe what you want and I'll build it in real-time:
+```
+You: "Create a chill lo-fi track at 85 BPM"
+Me: [Creates tracks, loads instruments, programs notes, plays it]
+You: "Add some reverb to the keys"
+Me: [Adds reverb, adjusts parameters]
+You: "Export it to MP3"
+Me: [Records and exports to file]
+```
+
+**2. JSON Schema (Reproducible)**
+Define songs as JSON files using `song-schema` (included as dependency):
+```bash
+# Execute a song definition
+song_execute("path/to/song.json")
+
+# Preview timing without executing
+song_execute_info("path/to/song.json")
+```
+
+See `song-schema` examples at: https://github.com/ldraney/song-schema/tree/main/examples
+
+### Export Workflow (Important!)
+
+To export your creation to MP3/WAV:
+
+1. **Warm up instruments** - Fire the scene, let it play 3-4 seconds
+2. **Stop playback** - `song_stop()`
+3. **Export** - `song_export_audio("/path/to/output.mp3", duration_seconds=30)`
+
+Prerequisites:
+- FFmpeg installed (`brew install ffmpeg` on macOS)
+- Audio loopback device (BlackHole on macOS, VB-Cable on Windows)
+
+---
+
 ## Vision
 MCP server that exposes Ableton Live control to Claude Code. Users interact with Ableton through natural conversation while watching changes happen in real-time.
 
