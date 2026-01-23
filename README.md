@@ -8,8 +8,8 @@ An MCP (Model Context Protocol) server that exposes 260+ tools for controlling A
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/ldraney/ableton-mcp-server.git
-cd ableton-mcp-server
+git clone https://github.com/ldraney/ableton-mcp.git
+cd ableton-mcp
 poetry install
 
 # 2. Start Ableton Live 12 with AbletonOSC enabled
@@ -61,14 +61,14 @@ Claude Code executes the sequence of operations in Ableton while you watch it ha
                         │ MCP Protocol (stdio)
                         ▼
 ┌─────────────────────────────────────────────────────────┐
-│              ableton-mcp-server (this project)          │
+│              ableton-mcp (this project)          │
 │                   FastMCP + Python                      │
 └───────────────────────┬─────────────────────────────────┘
                         │ Python imports
                         ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  abletonosc-client                      │
-│         github.com/ldraney/ableton-music-development    │
+│         github.com/ldraney/abletonosc-client    │
 └───────────────────────┬─────────────────────────────────┘
                         │ UDP (ports 11000/11001)
                         ▼
@@ -116,8 +116,8 @@ clip_fire(track_index=0, clip_index=0)
 
 ```bash
 # Clone the repository
-git clone https://github.com/ldraney/ableton-mcp-server.git
-cd ableton-mcp-server
+git clone https://github.com/ldraney/ableton-mcp.git
+cd ableton-mcp
 
 # Install with Poetry
 poetry install
@@ -133,7 +133,7 @@ Add to your Claude Code MCP settings (`~/.claude/settings.json` or project `.mcp
     "ableton": {
       "command": "poetry",
       "args": ["run", "ableton-mcp"],
-      "cwd": "/path/to/ableton-mcp-server"
+      "cwd": "/path/to/ableton-mcp"
     }
   }
 }
@@ -153,7 +153,7 @@ The server auto-detects WSL2 environments and configures the correct Windows hos
 | Project | Description |
 |---------|-------------|
 | [song-schema](https://github.com/ldraney/song-schema) | Define songs as JSON, execute them in Ableton (included as dependency) |
-| [ableton-music-development](https://github.com/ldraney/ableton-music-development) | Python OSC client wrapper for Ableton |
+| [abletonosc-client](https://github.com/ldraney/abletonosc-client) | Python OSC client wrapper for Ableton |
 | [AbletonOSC](https://github.com/ideoforms/AbletonOSC) | The MIDI Remote Script that makes this possible |
 
 ## Development

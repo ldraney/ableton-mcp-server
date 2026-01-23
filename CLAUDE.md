@@ -65,9 +65,9 @@ MCP server that exposes Ableton Live control to Claude Code. Users interact with
 ```
 Claude Code
     ↓ MCP protocol (stdio)
-ableton-mcp-server (this project)
+ableton-mcp (this project)
     ↓ Python imports
-ableton-osc-client (pip install from ../ableton-music-development)
+abletonosc-client (pip install abletonosc-client)
     ↓ UDP ports 11000/11001
 AbletonOSC (MIDI Remote Script in Ableton)
     ↓ Live Object Model
@@ -76,7 +76,7 @@ Ableton Live
 
 ## Prerequisites
 - Ableton Live 12 with AbletonOSC installed and enabled
-- The `ableton-osc-client` package from `ldraney/ableton-music-development`
+- The `abletonosc-client` package from PyPI
 
 ## Tool Organization
 
@@ -270,7 +270,7 @@ browser_scan_packs_from_disk()
 ## Project Structure
 
 ```
-ableton-mcp-server/
+ableton-mcp/
 ├── pyproject.toml
 ├── src/
 │   └── ableton_mcp/
@@ -319,7 +319,7 @@ The server runs via stdio, configured in Claude Code's MCP settings:
     "ableton": {
       "command": "python",
       "args": ["-m", "ableton_mcp"],
-      "cwd": "/path/to/ableton-mcp-server"
+      "cwd": "/path/to/ableton-mcp"
     }
   }
 }
@@ -333,8 +333,7 @@ The server runs via stdio, configured in Claude Code's MCP settings:
 # Install dependencies
 poetry install
 
-# Install OSC client dependency (local development)
-poetry add --editable ../ableton-music-development
+# OSC client is installed automatically from PyPI
 
 # Run server directly for testing
 poetry run python -m ableton_mcp
@@ -357,7 +356,7 @@ See `docs/TROUBLESHOOTING.md` for:
 - QA checklist
 
 ## Related Projects
-- `ldraney/ableton-music-development` - OSC client wrapper (Phase 1)
+- `ldraney/abletonosc-client` - OSC client wrapper (PyPI: abletonosc-client)
 - `ldraney/AbletonOSC` - Fork with device insertion (PR #173 to upstream)
 - `ideoforms/AbletonOSC` - Upstream Ableton MIDI Remote Script
 - `ldraney/ableton-manual` - RAG for Ableton documentation
