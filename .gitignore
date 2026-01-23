@@ -41,3 +41,6 @@ htmlcov/
 
 # Local Ableton configuration (auto-generated)
 local_browser_cache.json
+
+# MCP configuration (generated from template - run ./setup-mcp.sh)
+.mcp.json

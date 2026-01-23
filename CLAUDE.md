@@ -18,42 +18,85 @@
 
 ### Song Development Workflow
 
-There are two ways to create music:
+**Build one track at a time.** Don't try to create everything at once - get each element sounding good before adding more.
 
-**1. Conversational (Interactive)**
-Just describe what you want and I'll build it in real-time:
+#### Step-by-Step Process
+
 ```
-You: "Create a chill lo-fi track at 85 BPM"
-Me: [Creates tracks, loads instruments, programs notes, plays it]
-You: "Add some reverb to the keys"
-Me: [Adds reverb, adjusts parameters]
-You: "Export it to MP3"
-Me: [Records and exports to file]
+1. SETUP
+   song_stop()                    # Stop any playback
+   song_clear_all_tracks()        # Fresh start (optional)
+   song_set_tempo(90)             # Set your BPM
+
+2. CREATE TRACK
+   song_create_midi_track(0)      # Create a MIDI track
+   track_set_name(0, "Drums")     # Name it
+
+3. LOAD INSTRUMENT (use presets, not raw synths!)
+   track_insert_device(0, "808 Core")     # Drum kit - sounds good
+   track_insert_device(0, "Suitcase")     # Piano preset - sounds good
+   # AVOID: "Analog", "Wavetable" raw - they sound harsh
+
+4. CREATE CLIP
+   clip_slot_create_clip(track_index=0, scene_index=0, length=4.0)
+
+5. ADD MIDI NOTES
+   clip_add_notes(track_index=0, clip_index=0, notes=[
+       {"pitch": 36, "start_time": 0, "duration": 0.5, "velocity": 100},
+       {"pitch": 36, "start_time": 2, "duration": 0.5, "velocity": 100}
+   ])
+
+6. PREVIEW
+   scene_fire(0)                  # Play the scene
+   # Listen, adjust, repeat steps 3-6
+
+7. ITERATE
+   # Add more tracks, one at a time
+   # Repeat steps 2-6 for bass, keys, etc.
+
+8. EXPORT
+   scene_fire(0)                  # Warm up instruments (3-4 sec)
+   song_stop()
+   song_export_audio("/path/to/output.mp3", duration_seconds=30)
 ```
 
-**2. JSON Schema (Reproducible)**
-Define songs as JSON files using `song-schema` (included as dependency):
+#### API Gotchas
+
+- `clip_slot_create_clip()` uses `scene_index`
+- `clip_add_notes()` uses `clip_index` (same value, different name)
+- Notes must be passed as a list of dicts with: pitch, start_time, duration, velocity
+
+#### Instrument Selection Tips
+
+**Good (presets that sound decent out of the box):**
+- Drum kits: "808 Core", "909 Core", "Golden Era"
+- Keys: "Suitcase", "Wurly", "Grand Piano"
+- Any `.adg` preset file
+
+**Avoid (raw synths need tweaking):**
+- "Analog", "Wavetable", "Operator" without a preset
+- These default to harsh/annoying sounds
+
+#### JSON Schema (Reproducible)
+
+For repeatable songs, define them as JSON files using `song-schema`:
 ```bash
-# Execute a song definition
-song_execute("path/to/song.json")
-
-# Preview timing without executing
-song_execute_info("path/to/song.json")
+song_execute("path/to/song.json")           # Execute
+song_execute_info("path/to/song.json")      # Preview timing only
 ```
 
-See `song-schema` examples at: https://github.com/ldraney/song-schema/tree/main/examples
+See examples: https://github.com/ldraney/song-schema/tree/main/examples
 
-### Export Workflow (Important!)
-
-To export your creation to MP3/WAV:
-
-1. **Warm up instruments** - Fire the scene, let it play 3-4 seconds
-2. **Stop playback** - `song_stop()`
-3. **Export** - `song_export_audio("/path/to/output.mp3", duration_seconds=30)`
+### Export Workflow
 
 Prerequisites:
 - FFmpeg installed (`brew install ffmpeg` on macOS)
 - Audio loopback device (BlackHole on macOS, VB-Cable on Windows)
+
+Steps:
+1. **Warm up** - `scene_fire(0)`, wait 3-4 seconds
+2. **Stop** - `song_stop()`
+3. **Export** - `song_export_audio("/path/to/output.mp3", duration_seconds=30)`
 
 ---
 

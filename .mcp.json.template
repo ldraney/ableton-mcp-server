@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ableton": {
+      "command": "{{PYTHON_PATH}}",
+      "args": ["-m", "ableton_mcp"],
+      "cwd": "{{ABLETON_MCP_PATH}}",
+      "description": "Control Ableton Live via OSC. Create tracks, add MIDI clips with notes, control tempo/transport, and manipulate the session view. Requires Ableton Live running with AbletonOSC enabled."
+    }
+  }
+}

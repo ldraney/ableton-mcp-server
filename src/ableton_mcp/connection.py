@@ -57,7 +57,10 @@ def get_client() -> AbletonOSCClient:
             # Double-check after acquiring lock
             if _client is None:
                 host, listen_host = _detect_wsl2_host()
-                _client = connect(host=host, listen_host=listen_host)
+                if listen_host is not None:
+                    _client = connect(host=host, listen_host=listen_host)
+                else:
+                    _client = connect(host=host)
     return _client
 
 
