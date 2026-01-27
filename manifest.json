@@ -1,0 +1,50 @@
+{
+  "manifest_version": "0.4",
+  "name": "ableton-mcp",
+  "display_name": "Ableton MCP",
+  "version": "0.1.0",
+  "description": "Control Ableton Live from Claude via OSC - tracks, clips, transport, devices",
+  "author": {
+    "name": "ldraney"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ldraney/ableton-mcp-server.git"
+  },
+  "server": {
+    "type": "uv",
+    "entry_point": "mcpb_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "python", "${__dirname}/mcpb_server.py"],
+      "env": {
+        "ABLETON_OSC_HOST": "${user_config.osc_host}",
+        "ABLETON_OSC_PORT": "${user_config.osc_port}"
+      }
+    }
+  },
+  "user_config": {
+    "osc_host": {
+      "type": "string",
+      "title": "Ableton OSC Host",
+      "description": "Host address where AbletonOSC is running",
+      "default": "127.0.0.1",
+      "required": false
+    },
+    "osc_port": {
+      "type": "string",
+      "title": "Ableton OSC Port",
+      "description": "OSC port for AbletonOSC",
+      "default": "11000",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "linux", "win32"],
+    "runtimes": {
+      "python": ">=3.11"
+    }
+  },
+  "keywords": ["ableton", "live", "music", "osc", "daw"],
+  "license": "MIT"
+}
